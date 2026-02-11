@@ -5,21 +5,35 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { MapPin, Phone, Clock, Navigation } from 'lucide-react';
 import { BRANCHES } from '../types';
+import branches from '../assets/branches.png';
+
 export function BranchesPage() {
   return (
     <Layout>
+      {/* Hero */}
+<div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+  {/* Background Image */}
+  <div
+    className="absolute inset-0 bg-cover bg-center opacity-10"
+    style={{ backgroundImage: `url(${branches})` }}
+  />
+  {/* Gradient Overlay */}
+  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
+
+  {/* Content */}
+  <div className="relative max-w-7xl mx-auto text-center">
+    <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
+      Our Network
+    </h1>
+    <p className="text-xl text-brand-gray max-w-3xl mx-auto leading-relaxed">
+      Visit one of our conveniently located service centers across Sri
+      Lanka.
+    </p>
+  </div>
+</div>
       <div className="bg-brand-black py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-6">
-              Our Network
-            </h1>
-            <p className="text-xl text-brand-gray max-w-3xl mx-auto">
-              Visit one of our conveniently located service centers across Sri
-              Lanka.
-            </p>
-          </div>
-
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {BRANCHES.map((branch) =>
             <Card
@@ -27,23 +41,32 @@ export function BranchesPage() {
               className="overflow-hidden flex flex-col md:flex-row">
 
                 {/* Map Placeholder */}
-                <div className="w-full md:w-1/3 h-48 md:h-auto bg-brand-card border-b md:border-b-0 md:border-r border-white/5 relative group">
-                  <div className="absolute inset-0 bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                    <MapPin className="w-8 h-8 text-brand-gray" />
-                  </div>
-                  {/* In a real app, this would be a Google Map iframe or component */}
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <Button
-                    size="sm"
-                    variant="secondary"
-                    fullWidth
-                    className="text-xs">
+                <div className="relative h-64 md:h-auto md:w-1/3 rounded-2xl overflow-hidden border border-yellow-400/20">
+  <iframe
+    src={branch.mapEmbed}
+    width="100%"
+    height="100%"
+    style={{ border: 0 }}
+    allowFullScreen
+    loading="lazy"
+    referrerPolicy="no-referrer-when-downgrade"
+  ></iframe>
 
-                      <Navigation className="w-3 h-3 mr-2" />
-                      Get Directions
-                    </Button>
-                  </div>
-                </div>
+  <div className="absolute bottom-4 left-4 right-4">
+    <Button
+      size="sm"
+      variant="secondary"
+      fullWidth
+      className="text-xs flex items-center justify-center gap-1"
+      onClick={() =>
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(branch.address)}`, "_blank")
+      }
+    >
+      <Navigation className="w-3 h-3" />
+      Get Directions
+    </Button>
+  </div>
+</div>
 
                 <div className="p-8 flex-1">
                   <div className="flex justify-between items-start mb-4">

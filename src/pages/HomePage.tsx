@@ -27,7 +27,7 @@ export function HomePage() {
             <Link to="/booking">
               <Button
                 size="lg"
-                className="bg-brand-black text-white hover:bg-brand-dark border-transparent w-full sm:w-auto">
+                className="bg-brand-white text-black hover:bg-brand-dark border-transparent w-full sm:w-auto">
 
                 Book Appointment Now
               </Button>

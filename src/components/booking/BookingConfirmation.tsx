@@ -1,12 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Calendar, Clock, MapPin } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, MapPin, Hash } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { BookingState } from '../../types';
+
 interface BookingConfirmationProps {
   booking: BookingState;
+  bookingId?: string | null;
 }
-export function BookingConfirmation({ booking }: BookingConfirmationProps) {
+
+export function BookingConfirmation({ booking, bookingId }: BookingConfirmationProps) {
   return (
     <div className="max-w-2xl mx-auto text-center animate-fade-in py-8">
       <div className="mb-8 flex justify-center">
@@ -16,6 +19,14 @@ export function BookingConfirmation({ booking }: BookingConfirmationProps) {
       </div>
 
       <h2 className="text-3xl font-bold text-white mb-4">Booking Confirmed!</h2>
+      
+      {bookingId && (
+        <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-brand-yellow/10 border border-brand-yellow/20 rounded-lg">
+          <Hash className="w-4 h-4 text-brand-yellow" />
+          <span className="text-brand-yellow font-mono font-bold">{bookingId}</span>
+        </div>
+      )}
+
       <p className="text-brand-gray text-lg mb-8">
         Thank you {booking.customer.name}. Your appointment has been scheduled
         successfully. We have sent a confirmation to {booking.customer.email}.
@@ -65,9 +76,9 @@ export function BookingConfirmation({ booking }: BookingConfirmationProps) {
             <div>
               <p className="text-sm text-brand-gray">Services</p>
               <ul className="list-disc list-inside text-white text-sm">
-                {booking.services.map((s) =>
-                <li key={s.id}>{s.name}</li>
-                )}
+                {booking.services.map((s) => (
+                  <li key={s.id}>{s.name}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -80,6 +91,6 @@ export function BookingConfirmation({ booking }: BookingConfirmationProps) {
         </Link>
         <Button onClick={() => window.print()}>Print Confirmation</Button>
       </div>
-    </div>);
-
+    </div>
+  );
 }

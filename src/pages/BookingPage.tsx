@@ -10,15 +10,22 @@ import { DatePicker } from '../components/booking/DatePicker';
 import { TimeSlotPicker } from '../components/booking/TimeSlotPicker';
 import { CustomerForm } from '../components/booking/CustomerForm';
 import { BookingConfirmation } from '../components/booking/BookingConfirmation';
+import { bookingAPI } from '../services/api';
+import book from '../assets/book.png';
 import {
   BookingState,
   BookingStep,
   Branch,
   ServiceCategory,
-  ServiceItem } from
-'../types';
+  ServiceItem
+} from '../types';
+
 export function BookingPage() {
   const [currentStep, setCurrentStep] = useState<BookingStep>('branch');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  
   const [booking, setBooking] = useState<BookingState>({
     branch: null,
     category: null,
@@ -32,7 +39,17 @@ export function BookingPage() {
       vehicleNo: ''
     }
   });
-  const handleNext = () => {
+
+  const handleNext = async () => {
+    setError(null);
+
+    // If on details step, submit the booking
+    if (currentStep === 'details') {
+      await handleSubmitBooking();
+      return;
+    }
+
+    // Otherwise, move to next step
     switch (currentStep) {
       case 'branch':
         setCurrentStep('category');
@@ -49,14 +66,35 @@ export function BookingPage() {
       case 'time':
         setCurrentStep('details');
         break;
-      case 'details':
-        // Submit logic would go here
-        setCurrentStep('confirmation');
-        break;
     }
     window.scrollTo(0, 0);
   };
+
+  const handleSubmitBooking = async () => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await bookingAPI.createBooking(booking);
+
+      if (response.success) {
+        setBookingId(response.booking?.bookingId || null);
+        setCurrentStep('confirmation');
+        window.scrollTo(0, 0);
+      } else {
+        setError(response.message || 'Failed to create booking');
+      }
+    } catch (err: any) {
+      console.error('Booking submission error:', err);
+      setError(err.message || 'Failed to submit booking. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleBack = () => {
+    setError(null);
+    
     switch (currentStep) {
       case 'category':
         setCurrentStep('branch');
@@ -75,6 +113,7 @@ export function BookingPage() {
         break;
     }
   };
+
   const isNextDisabled = () => {
     switch (currentStep) {
       case 'branch':
@@ -91,147 +130,180 @@ export function BookingPage() {
         return (
           !booking.customer.name ||
           !booking.customer.email ||
-          !booking.customer.phone);
-
+          !booking.customer.phone
+        );
       default:
         return false;
     }
   };
+
   return (
     <Layout>
+
+{/* Hero */}
+<div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+  {/* Background Image */}
+  <div
+    className="absolute inset-0 bg-cover bg-center opacity-10"
+    style={{ backgroundImage: `url(${book})` }}
+  />
+  {/* Gradient Overlay */}
+  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
+
+  {/* Content */}
+  <div className="relative max-w-7xl mx-auto text-center">
+    <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
+ Book Your Service    </h1>
+    
+  </div>
+</div>
       <div className="min-h-screen bg-brand-black py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          {currentStep !== 'confirmation' &&
-          <div className="mb-12">
-              <h1 className="text-3xl md:text-4xl font-black text-white text-center mb-8">
-                Book Your Service
-              </h1>
+          {currentStep !== 'confirmation' && (
+            <div className="mb-12">
+             
               <StepIndicator currentStep={currentStep} />
             </div>
-          }
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-500 text-center">{error}</p>
+            </div>
+          )}
 
           <div className="bg-brand-black min-h-[400px]">
-            {currentStep === 'branch' &&
-            <BranchSelector
-              selectedBranch={booking.branch}
-              onSelect={(branch) =>
-              setBooking({
-                ...booking,
-                branch,
-                category: null,
-                services: []
-              })
-              } />
-
-            }
-
-            {currentStep === 'category' && booking.branch &&
-            <CategorySelector
-              selectedBranch={booking.branch}
-              selectedCategory={booking.category}
-              onSelect={(category) =>
-              setBooking({
-                ...booking,
-                category,
-                services: []
-              })
-              } />
-
-            }
-
-            {currentStep === 'service' && booking.category &&
-            <ServiceSelector
-              category={booking.category}
-              selectedServices={booking.services}
-              onToggle={(service) => {
-                const exists = booking.services.find(
-                  (s) => s.id === service.id
-                );
-                if (exists) {
+            {currentStep === 'branch' && (
+              <BranchSelector
+                selectedBranch={booking.branch}
+                onSelect={(branch) =>
                   setBooking({
                     ...booking,
-                    services: booking.services.filter(
-                      (s) => s.id !== service.id
-                    )
-                  });
-                } else {
-                  setBooking({
-                    ...booking,
-                    services: [...booking.services, service]
-                  });
+                    branch,
+                    category: null,
+                    services: []
+                  })
                 }
-              }} />
+              />
+            )}
 
-            }
+            {currentStep === 'category' && booking.branch && (
+              <CategorySelector
+                selectedBranch={booking.branch}
+                selectedCategory={booking.category}
+                onSelect={(category) =>
+                  setBooking({
+                    ...booking,
+                    category,
+                    services: []
+                  })
+                }
+              />
+            )}
 
-            {currentStep === 'date' &&
-            <div className="flex justify-center">
+            {currentStep === 'service' && booking.category && (
+              <ServiceSelector
+                category={booking.category}
+                selectedServices={booking.services}
+                onToggle={(service) => {
+                  const exists = booking.services.find(
+                    (s) => s.id === service.id
+                  );
+                  if (exists) {
+                    setBooking({
+                      ...booking,
+                      services: booking.services.filter(
+                        (s) => s.id !== service.id
+                      )
+                    });
+                  } else {
+                    setBooking({
+                      ...booking,
+                      services: [...booking.services, service]
+                    });
+                  }
+                }}
+              />
+            )}
+
+            {currentStep === 'date' && (
+              <div className="flex justify-center">
                 <DatePicker
-                selectedDate={booking.date}
-                onSelect={(date) =>
-                setBooking({
-                  ...booking,
-                  date
-                })
-                } />
-
+                  selectedDate={booking.date}
+                  onSelect={(date) =>
+                    setBooking({
+                      ...booking,
+                      date
+                    })
+                  }
+                />
               </div>
-            }
+            )}
 
-            {currentStep === 'time' &&
-            <TimeSlotPicker
-              selectedTime={booking.timeSlot}
-              onSelect={(timeSlot) =>
-              setBooking({
-                ...booking,
-                timeSlot
-              })
-              } />
+            {currentStep === 'time' && (
+              <TimeSlotPicker
+                selectedTime={booking.timeSlot}
+                onSelect={(timeSlot) =>
+                  setBooking({
+                    ...booking,
+                    timeSlot
+                  })
+                }
+              />
+            )}
 
-            }
+            {currentStep === 'details' && (
+              <CustomerForm
+                data={booking.customer}
+                onChange={(customer) =>
+                  setBooking({
+                    ...booking,
+                    customer
+                  })
+                }
+              />
+            )}
 
-            {currentStep === 'details' &&
-            <CustomerForm
-              data={booking.customer}
-              onChange={(customer) =>
-              setBooking({
-                ...booking,
-                customer
-              })
-              } />
-
-            }
-
-            {currentStep === 'confirmation' &&
-            <BookingConfirmation booking={booking} />
-            }
+            {currentStep === 'confirmation' && (
+              <BookingConfirmation 
+                booking={booking} 
+                bookingId={bookingId}
+              />
+            )}
           </div>
 
-          {currentStep !== 'confirmation' &&
-          <div className="mt-12 flex justify-between pt-8 border-t border-white/10">
+          {currentStep !== 'confirmation' && (
+            <div className="mt-12 flex justify-between pt-8 border-t border-white/10">
               <Button
-              variant="ghost"
-              onClick={handleBack}
-              disabled={currentStep === 'branch'}
-              className={currentStep === 'branch' ? 'invisible' : ''}>
-
+                variant="ghost"
+                onClick={handleBack}
+                disabled={currentStep === 'branch' || isSubmitting}
+                className={currentStep === 'branch' ? 'invisible' : ''}
+              >
                 <ArrowLeft className="mr-2 w-4 h-4" /> Back
               </Button>
 
               <Button
-              onClick={handleNext}
-              disabled={isNextDisabled()}
-              className="w-32">
-
-                {currentStep === 'details' ? 'Confirm' : 'Next'}
-                {currentStep !== 'details' &&
-              <ArrowRight className="ml-2 w-4 h-4" />
-              }
+                onClick={handleNext}
+                disabled={isNextDisabled() || isSubmitting}
+                className="w-32"
+              >
+                {isSubmitting ? (
+                  'Submitting...'
+                ) : currentStep === 'details' ? (
+                  'Confirm'
+                ) : (
+                  <>
+                    Next
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </>
+                )}
               </Button>
             </div>
-          }
+          )}
         </div>
       </div>
-    </Layout>);
-
+    </Layout>
+  );
 }

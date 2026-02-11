@@ -30,7 +30,7 @@ export function AboutPage() {
               <div className="w-16 h-16 bg-brand-yellow/10 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-yellow">
                 <History className="w-8 h-8" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">25+ Years</h3>
+              <h3 className="text-xl font-bold text-white mb-3">43+ Years</h3>
               <p className="text-brand-gray text-sm">
                 Decades of experience serving Sri Lankan motorists with
                 integrity.
@@ -94,7 +94,7 @@ export function AboutPage() {
             <div className="relative">
               <div className="absolute inset-0 bg-brand-yellow transform rotate-3 rounded-2xl opacity-20" />
               <img
-                src="/hero-bg.png"
+                src="./hero-bg.png"
                 alt="Workshop"
                 className="relative rounded-2xl shadow-2xl border border-white/10" />
 

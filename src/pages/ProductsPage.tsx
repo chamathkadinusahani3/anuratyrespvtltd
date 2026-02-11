@@ -4,6 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Search, ExternalLink, Send } from 'lucide-react';
+import products from '../assets/products.png';
 
 // Product Data from The Tyre Station
 const PRODUCTS = [
@@ -418,19 +419,29 @@ export function ProductsPage() {
 
   return (
     <Layout>
+      {/* Hero */}
+<div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+  {/* Background Image */}
+  <div
+    className="absolute inset-0 bg-cover bg-center opacity-10"
+    style={{ backgroundImage: `url(${products})` }}
+  />
+  {/* Gradient Overlay */}
+  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
+
+  {/* Content */}
+  <div className="relative max-w-7xl mx-auto text-center">
+    <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
+      Premium Tyres & Tools
+    </h1>
+    <p className="text-xl text-brand-gray max-w-3xl mx-auto leading-relaxed">
+       Discover our curated selection from world-leading manufacturers
+    </p>
+  </div>
+</div>
       <div className="bg-brand-black py-12 px-4 sm:px-6 lg:px-8 min-h-screen">
         <div className="max-w-7xl mx-auto">
-          {/* Page Header */}
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black text-white mb-2">
-                Premium Tyres & Tools
-              </h1>
-              <p className="text-brand-gray">
-                Discover our curated selection from world-leading manufacturers
-              </p>
-            </div>
-          </div>
+        
 
           {/* Category Filter */}
           <div className="flex flex-wrap justify-center gap-3 mb-8">
