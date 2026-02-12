@@ -1,6 +1,6 @@
 // src/services/api.ts
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://anuratyres-backend-emm1774.vercel.app/api';
 
 export interface BookingPayload {
   branch: {
@@ -69,7 +69,7 @@ export const bookingAPI = {
     }
   },
 
-  // Health check
+  // Optional: health check
   async checkHealth(): Promise<boolean> {
     try {
       const response = await fetch(`${API_BASE_URL}/health`);

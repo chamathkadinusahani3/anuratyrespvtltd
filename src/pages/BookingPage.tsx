@@ -14,10 +14,7 @@ import { bookingAPI } from '../services/api';
 import book from '../assets/book.png';
 import {
   BookingState,
-  BookingStep,
-  Branch,
-  ServiceCategory,
-  ServiceItem
+  BookingStep
 } from '../types';
 
 export function BookingPage() {
@@ -25,7 +22,7 @@ export function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
-  
+
   const [booking, setBooking] = useState<BookingState>({
     branch: null,
     category: null,
@@ -43,29 +40,17 @@ export function BookingPage() {
   const handleNext = async () => {
     setError(null);
 
-    // If on details step, submit the booking
     if (currentStep === 'details') {
       await handleSubmitBooking();
       return;
     }
 
-    // Otherwise, move to next step
     switch (currentStep) {
-      case 'branch':
-        setCurrentStep('category');
-        break;
-      case 'category':
-        setCurrentStep('service');
-        break;
-      case 'service':
-        setCurrentStep('date');
-        break;
-      case 'date':
-        setCurrentStep('time');
-        break;
-      case 'time':
-        setCurrentStep('details');
-        break;
+      case 'branch': setCurrentStep('category'); break;
+      case 'category': setCurrentStep('service'); break;
+      case 'service': setCurrentStep('date'); break;
+      case 'date': setCurrentStep('time'); break;
+      case 'time': setCurrentStep('details'); break;
     }
     window.scrollTo(0, 0);
   };
@@ -94,79 +79,52 @@ export function BookingPage() {
 
   const handleBack = () => {
     setError(null);
-    
     switch (currentStep) {
-      case 'category':
-        setCurrentStep('branch');
-        break;
-      case 'service':
-        setCurrentStep('category');
-        break;
-      case 'date':
-        setCurrentStep('service');
-        break;
-      case 'time':
-        setCurrentStep('date');
-        break;
-      case 'details':
-        setCurrentStep('time');
-        break;
+      case 'category': setCurrentStep('branch'); break;
+      case 'service': setCurrentStep('category'); break;
+      case 'date': setCurrentStep('service'); break;
+      case 'time': setCurrentStep('date'); break;
+      case 'details': setCurrentStep('time'); break;
     }
   };
 
   const isNextDisabled = () => {
     switch (currentStep) {
-      case 'branch':
-        return !booking.branch;
-      case 'category':
-        return !booking.category;
-      case 'service':
-        return booking.services.length === 0;
-      case 'date':
-        return !booking.date;
-      case 'time':
-        return !booking.timeSlot;
-      case 'details':
-        return (
-          !booking.customer.name ||
-          !booking.customer.email ||
-          !booking.customer.phone
-        );
-      default:
-        return false;
+      case 'branch': return !booking.branch;
+      case 'category': return !booking.category;
+      case 'service': return booking.services.length === 0;
+      case 'date': return !booking.date;
+      case 'time': return !booking.timeSlot;
+      case 'details': return (
+        !booking.customer.name ||
+        !booking.customer.email ||
+        !booking.customer.phone
+      );
+      default: return false;
     }
   };
 
   return (
     <Layout>
+      <div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-10"
+          style={{ backgroundImage: `url(${book})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
+        <div className="relative max-w-7xl mx-auto text-center">
+          <h1 className="text-4xl md:text-6xl font-black text-white mb-6">Book Your Service</h1>
+        </div>
+      </div>
 
-{/* Hero */}
-<div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-  {/* Background Image */}
-  <div
-    className="absolute inset-0 bg-cover bg-center opacity-10"
-    style={{ backgroundImage: `url(${book})` }}
-  />
-  {/* Gradient Overlay */}
-  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
-
-  {/* Content */}
-  <div className="relative max-w-7xl mx-auto text-center">
-    <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
- Book Your Service    </h1>
-    
-  </div>
-</div>
       <div className="min-h-screen bg-brand-black py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {currentStep !== 'confirmation' && (
             <div className="mb-12">
-             
               <StepIndicator currentStep={currentStep} />
             </div>
           )}
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
               <p className="text-red-500 text-center">{error}</p>
@@ -177,14 +135,7 @@ export function BookingPage() {
             {currentStep === 'branch' && (
               <BranchSelector
                 selectedBranch={booking.branch}
-                onSelect={(branch) =>
-                  setBooking({
-                    ...booking,
-                    branch,
-                    category: null,
-                    services: []
-                  })
-                }
+                onSelect={(branch) => setBooking({ ...booking, branch, category: null, services: [] })}
               />
             )}
 
@@ -192,13 +143,7 @@ export function BookingPage() {
               <CategorySelector
                 selectedBranch={booking.branch}
                 selectedCategory={booking.category}
-                onSelect={(category) =>
-                  setBooking({
-                    ...booking,
-                    category,
-                    services: []
-                  })
-                }
+                onSelect={(category) => setBooking({ ...booking, category, services: [] })}
               />
             )}
 
@@ -207,21 +152,11 @@ export function BookingPage() {
                 category={booking.category}
                 selectedServices={booking.services}
                 onToggle={(service) => {
-                  const exists = booking.services.find(
-                    (s) => s.id === service.id
-                  );
+                  const exists = booking.services.find(s => s.id === service.id);
                   if (exists) {
-                    setBooking({
-                      ...booking,
-                      services: booking.services.filter(
-                        (s) => s.id !== service.id
-                      )
-                    });
+                    setBooking({ ...booking, services: booking.services.filter(s => s.id !== service.id) });
                   } else {
-                    setBooking({
-                      ...booking,
-                      services: [...booking.services, service]
-                    });
+                    setBooking({ ...booking, services: [...booking.services, service] });
                   }
                 }}
               />
@@ -231,12 +166,7 @@ export function BookingPage() {
               <div className="flex justify-center">
                 <DatePicker
                   selectedDate={booking.date}
-                  onSelect={(date) =>
-                    setBooking({
-                      ...booking,
-                      date
-                    })
-                  }
+                  onSelect={(date) => setBooking({ ...booking, date })}
                 />
               </div>
             )}
@@ -244,30 +174,20 @@ export function BookingPage() {
             {currentStep === 'time' && (
               <TimeSlotPicker
                 selectedTime={booking.timeSlot}
-                onSelect={(timeSlot) =>
-                  setBooking({
-                    ...booking,
-                    timeSlot
-                  })
-                }
+                onSelect={(timeSlot) => setBooking({ ...booking, timeSlot })}
               />
             )}
 
             {currentStep === 'details' && (
               <CustomerForm
                 data={booking.customer}
-                onChange={(customer) =>
-                  setBooking({
-                    ...booking,
-                    customer
-                  })
-                }
+                onChange={(customer) => setBooking({ ...booking, customer })}
               />
             )}
 
             {currentStep === 'confirmation' && (
-              <BookingConfirmation 
-                booking={booking} 
+              <BookingConfirmation
+                booking={booking}
                 bookingId={bookingId}
               />
             )}
@@ -289,16 +209,7 @@ export function BookingPage() {
                 disabled={isNextDisabled() || isSubmitting}
                 className="w-32"
               >
-                {isSubmitting ? (
-                  'Submitting...'
-                ) : currentStep === 'details' ? (
-                  'Confirm'
-                ) : (
-                  <>
-                    Next
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </>
-                )}
+                {isSubmitting ? 'Submitting...' : currentStep === 'details' ? 'Confirm' : <>Next <ArrowRight className="ml-2 w-4 h-4" /></>}
               </Button>
             </div>
           )}
