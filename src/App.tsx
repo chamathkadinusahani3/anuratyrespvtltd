@@ -13,6 +13,7 @@ import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { ProductsPage } from './pages/ProductsPage';
 
+
 // ScrollToTop component to handle scroll restoration
 function ScrollToTop() {
   const { pathname } = useLocation();
