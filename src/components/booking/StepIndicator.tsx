@@ -67,7 +67,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                 className={`
                   w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
                   ${isCompleted ? 'bg-brand-yellow text-brand-black scale-110' : ''}
-                  ${isCurrent ? 'bg-brand-black border-2 border-brand-yellow text-brand-yellow scale-125 shadow-[0_0_15px_rgba(254,241,4,0.3)]' : ''}
+                  ${isCurrent ? 'bg-black border-2 border-brand-yellow text-brand-yellow scale-125 shadow-[0_0_15px_rgba(254,241,4,0.3)]' : ''}
                   ${!isCompleted && !isCurrent ? 'bg-brand-card border border-white/20 text-brand-gray' : ''}
                 `}>
 

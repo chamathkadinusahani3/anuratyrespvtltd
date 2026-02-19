@@ -106,18 +106,25 @@ export function BookingPage() {
 
   return (
     <Layout>
-      <div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-10"
           style={{ backgroundImage: `url(${book})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
         <div className="relative max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-black text-white mb-6">Book Your Service</h1>
+         <h1 className="text-4xl md:text-7xl font-black mb-6 uppercase tracking-tighter
+    text-transparent bg-clip-text bg-gradient-to-r 
+    from-[#FFCC00] from-10% 
+    via-[#FFFFFF] via-50% 
+    to-[#FF0000] to-90%
+    animate-gradient-move">
+    Book Your Service
+  </h1>
         </div>
       </div>
 
-      <div className="min-h-screen bg-brand-black py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-black py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {currentStep !== 'confirmation' && (
             <div className="mb-12">
@@ -131,7 +138,7 @@ export function BookingPage() {
             </div>
           )}
 
-          <div className="bg-brand-black min-h-[400px]">
+          <div className="bg-black min-h-[400px]">
             {currentStep === 'branch' && (
               <BranchSelector
                 selectedBranch={booking.branch}

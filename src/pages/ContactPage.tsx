@@ -77,26 +77,31 @@ export function ContactPage() {
   return (
     <Layout>
       {/* Hero */}
-<div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+<div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
   {/* Background Image */}
   <div
     className="absolute inset-0 bg-cover bg-center opacity-10"
     style={{ backgroundImage: `url(${contact})` }}
   />
   {/* Gradient Overlay */}
-  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
+  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
 
   {/* Content */}
   <div className="relative max-w-7xl mx-auto text-center">
-    <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
-      Get in Touch
-    </h1>
+    <h1 className="text-4xl md:text-7xl font-black mb-6 uppercase tracking-tighter
+    text-transparent bg-clip-text bg-gradient-to-r 
+    from-[#FFCC00] from-10% 
+    via-[#FFFFFF] via-50% 
+    to-[#FF0000] to-90%
+    animate-gradient-move">
+    Get in Touch
+  </h1>
     <p className="text-xl text-brand-gray max-w-3xl mx-auto leading-relaxed">
        Have questions about our services or products? We're here to help.
     </p>
   </div>
 </div>
-      <div className="bg-brand-black py-20 px-4 sm:px-6 lg:px-8">
+      <div className="bg-black py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           
 
@@ -150,7 +155,7 @@ export function ContactPage() {
                       rows={5}
                       value={formState.message}
                       onChange={handleChange}
-                      className="w-full bg-brand-dark border border-white/10 rounded-lg px-4 py-3 text-white"
+                      className="w-full bg-brand-black border border-white/10 rounded-lg px-4 py-3 text-white"
                     />
                   </div>
 

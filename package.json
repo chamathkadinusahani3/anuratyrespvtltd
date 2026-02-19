@@ -14,7 +14,10 @@
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
+    "aos": "^2.3.4",
     "framer-motion": "^11.5.4",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.1.0",
     "lucide-react": "0.522.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

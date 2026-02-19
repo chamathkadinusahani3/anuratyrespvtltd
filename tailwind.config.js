@@ -17,6 +17,7 @@ export default {
           gray: '#d0d0d0',
           white: '#ffffff',
         }
+        
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
@@ -39,3 +40,5 @@ export default {
   },
   plugins: [],
 }
+
+

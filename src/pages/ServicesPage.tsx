@@ -11,27 +11,33 @@ export function ServicesPage() {
     <Layout>
 
 {/* Hero */}
-<div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+<div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
   {/* Background Image */}
   <div
     className="absolute inset-0 bg-cover bg-center opacity-10"
     style={{ backgroundImage: `url(${services})` }}
   />
   {/* Gradient Overlay */}
-  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
+  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
 
   {/* Content */}
   <div className="relative max-w-7xl mx-auto text-center">
-    <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
-      Our Services
-     </h1>
+    <h1 className="text-4xl md:text-7xl font-black mb-6 uppercase tracking-tighter
+    text-transparent bg-clip-text bg-gradient-to-r 
+    from-[#FFCC00] from-10% 
+    via-[#FFFFFF] via-50% 
+    to-[#FF0000] to-90%
+    animate-gradient-move">
+    Our Services
+  </h1>
+  
     <p className="text-xl text-brand-gray max-w-3xl mx-auto leading-relaxed">
       Comprehensive automotive care delivered by certified experts using
               state-of-the-art equipment.
     </p>
   </div>
 </div>
-      <div className="bg-brand-black py-20 px-4 sm:px-6 lg:px-8">
+      <div className="bg-black py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           
 
@@ -75,21 +81,8 @@ export function ServicesPage() {
                           {service.name}
                         </h3>
                         <p className="text-brand-gray mb-4">
-                          Professional {service.name.toLowerCase()} service
-                          using advanced technology for precision and safety.
+                          {service.description}
                         </p>
-                        <ul className="space-y-2 mb-6">
-                          <li className="flex items-center text-sm text-brand-gray">
-                            <CheckCircle className="w-4 h-4 text-brand-yellow mr-2" />
-                            Expert Technicians
-                          </li>
-                          <li className="flex items-center text-sm text-brand-gray">
-                            <CheckCircle className="w-4 h-4 text-brand-yellow mr-2" />
-                            Quality Guarantee
-                          </li>
-                        </ul>
-
-                       
                       </div>
                     </Card>
 
@@ -143,10 +136,9 @@ export function ServicesPage() {
                           {service.name}
                         </h3>
                         <p className="text-brand-gray mb-4">
-                          Comprehensive {service.name.toLowerCase()} to keep
-                          your vehicle running smoothly and efficiently.
+                          {service.description}
                         </p>
-                        
+                                                
                         
                       </div>
                     </Card>
@@ -200,8 +192,7 @@ export function ServicesPage() {
                           {service.name}
                         </h3>
                         <p className="text-brand-gray mb-4">
-                          Heavy-duty {service.name.toLowerCase()} solutions for
-                          commercial fleets and large vehicles.
+                          {service.description}
                         </p>
                       </div>
                     </Card>

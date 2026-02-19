@@ -6,23 +6,28 @@ export function AboutPage() {
   return (
     <Layout>
       {/* Hero */}
-      <div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
 
         <div className="relative max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
-            Driven by Excellence
-          </h1>
+          <h1 className="text-4xl md:text-7xl font-black mb-6 uppercase tracking-tighter
+    text-transparent bg-clip-text bg-gradient-to-r 
+    from-[#FFCC00] from-10% 
+    via-[#FFFFFF] via-50% 
+    to-[#FF0000] to-90%
+    animate-gradient-move">
+    Driven by Excellence
+  </h1>
           <p className="text-xl text-brand-gray max-w-3xl mx-auto leading-relaxed">
-            Since 1995, Anura Tyres has been Sri Lanka's trusted partner for
+            Since 1983, Anura Tyres has been Sri Lanka's trusted partner for
             premium vehicle care, combining expert craftsmanship with
             world-class technology.
           </p>
         </div>
       </div>
 
-      <div className="bg-brand-black py-20 px-4 sm:px-6 lg:px-8">
+      <div className="bg-black py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Values Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">

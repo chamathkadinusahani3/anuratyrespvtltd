@@ -31,3 +31,23 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-brand-gray/30;
 }
+
+/* Slide in from left */
+@keyframes slide-left {
+  0% { opacity: 0; transform: translateX(-50px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.slide-left {
+  animation: slide-left 0.8s ease forwards;
+}
+
+/* Slide in from right */
+@keyframes slide-right {
+  0% { opacity: 0; transform: translateX(50px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.slide-right {
+  animation: slide-right 0.8s ease forwards;
+}

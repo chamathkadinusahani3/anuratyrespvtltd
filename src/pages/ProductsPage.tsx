@@ -420,26 +420,31 @@ export function ProductsPage() {
   return (
     <Layout>
       {/* Hero */}
-<div className="relative bg-brand-dark py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+<div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
   {/* Background Image */}
   <div
     className="absolute inset-0 bg-cover bg-center opacity-10"
     style={{ backgroundImage: `url(${products})` }}
   />
   {/* Gradient Overlay */}
-  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-black" />
+  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
 
   {/* Content */}
   <div className="relative max-w-7xl mx-auto text-center">
-    <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
-      Premium Tyres & Tools
-    </h1>
+    <h1 className="text-4xl md:text-7xl font-black mb-6 uppercase tracking-tighter
+    text-transparent bg-clip-text bg-gradient-to-r 
+    from-[#FFCC00] from-10% 
+    via-[#FFFFFF] via-50% 
+    to-[#FF0000] to-90%
+    animate-gradient-move">
+    Premium Tyres & Tools
+  </h1>
     <p className="text-xl text-brand-gray max-w-3xl mx-auto leading-relaxed">
        Discover our curated selection from world-leading manufacturers
     </p>
   </div>
 </div>
-      <div className="bg-brand-black py-12 px-4 sm:px-6 lg:px-8 min-h-screen">
+      <div className="bg-black py-12 px-4 sm:px-6 lg:px-8 min-h-screen">
         <div className="max-w-7xl mx-auto">
         
 
