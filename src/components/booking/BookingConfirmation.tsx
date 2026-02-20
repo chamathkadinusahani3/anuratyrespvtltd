@@ -14,17 +14,18 @@ interface BookingConfirmationProps {
 export function BookingConfirmation({ booking, bookingId }: BookingConfirmationProps) {
   const [generating, setGenerating] = useState(false);
 
+  const discountInfo = (booking.customer as any).discountInfo;
+  const discountCode = (booking.customer as any).discountCode;
+
   const generatePDF = async () => {
     setGenerating(true);
-    
+
     try {
-      // Load logo first
       const loadLogo = (): Promise<string> => {
         return new Promise((resolve, reject) => {
           const img = new Image();
           img.crossOrigin = 'anonymous';
           img.onload = () => {
-            // Convert image to base64
             const canvas = document.createElement('canvas');
             canvas.width = img.width;
             canvas.height = img.height;
@@ -37,76 +38,57 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
             }
           };
           img.onerror = () => reject('Logo failed to load');
-          img.src = logo; // Your logo path
+          img.src = logo;
         });
       };
 
       let logoData: string | null = null;
       try {
         logoData = await loadLogo();
-      } catch (error) {
+      } catch {
         console.log('Logo not loaded, continuing without it');
       }
 
-      // Create new PDF document
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
       let yPosition = 20;
 
-      // ═══════════════════════════════════════════════════════════════════
-      // LETTERHEAD - Yellow Header Bar
-      // ═══════════════════════════════════════════════════════════════════
-      doc.setFillColor(255, 215, 0); // #FFD700 - Brand Yellow
+      // ── YELLOW HEADER ────────────────────────────────────────────────
+      doc.setFillColor(255, 215, 0);
       doc.rect(0, 0, pageWidth, 40, 'F');
 
-      // Add Logo (left side of header)
       if (logoData) {
-        try {
-          doc.addImage(logoData, 'PNG', 15, 8, 25, 25); // x, y, width, height
-        } catch (error) {
-          console.log('Error adding logo to PDF:', error);
-        }
+        try { doc.addImage(logoData, 'PNG', 15, 8, 25, 25); } catch {}
       }
 
-      // Company Name (centered)
-      doc.setTextColor(0, 0, 0); // Black
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(28);
       doc.setFont('helvetica', 'bold');
       doc.text('ANURA TYRES', pageWidth / 2, 18, { align: 'center' });
-      
+
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.text('(Pvt) Ltd', pageWidth / 2, 24, { align: 'center' });
 
-      // Contact Information in Header
       doc.setFontSize(9);
-      doc.setTextColor(51, 51, 51); // Dark gray
+      doc.setTextColor(51, 51, 51);
       doc.text('278/2 High Level Rd, Pannipitiya | Tel: 077 578 5785', pageWidth / 2, 32, { align: 'center' });
 
-      // Black separator line
       doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.5);
       doc.line(margin, 42, pageWidth - margin, 42);
 
       yPosition = 55;
 
-      // ═══════════════════════════════════════════════════════════════════
-      // DOCUMENT TITLE
-      // ═══════════════════════════════════════════════════════════════════
+      // ── TITLE ────────────────────────────────────────────────────────
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(255, 215, 0); // Yellow
-      doc.text(' BOOKING CONFIRMED', pageWidth / 2, yPosition, { align: 'center' });
+      doc.setTextColor(255, 215, 0);
+      doc.text('BOOKING CONFIRMED', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 10;
 
-      // Booking ID
       if (bookingId) {
         doc.setFontSize(12);
         doc.setFont('courier', 'bold');
@@ -115,7 +97,6 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
         yPosition += 10;
       }
 
-      // Thank you message
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(0, 0, 0);
@@ -124,30 +105,23 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
       doc.text(splitThankYou, margin, yPosition);
       yPosition += splitThankYou.length * 5 + 10;
 
-      // ═══════════════════════════════════════════════════════════════════
-      // BOOKING DETAILS SECTION
-      // ═══════════════════════════════════════════════════════════════════
-      doc.setFillColor(255, 250, 205); // Light yellow background
+      // ── BOOKING DETAILS ───────────────────────────────────────────────
+      doc.setFillColor(255, 250, 205);
       doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
-      
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
       doc.text('BOOKING DETAILS', margin + 3, yPosition + 5);
       yPosition += 12;
 
-      // Details table
       const details = [
         { label: 'Branch:', value: booking.branch?.name || 'N/A' },
         { label: 'Address:', value: booking.branch?.address || 'N/A' },
         { label: 'Phone:', value: booking.branch?.phone || 'N/A' },
-        { 
-          label: 'Date:', 
+        {
+          label: 'Date:',
           value: booking.date?.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
           }) || 'N/A'
         },
         { label: 'Time:', value: booking.timeSlot || 'N/A' }
@@ -158,14 +132,13 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(102, 102, 102);
         doc.text(detail.label, margin + 5, yPosition);
-        
+
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
         const valueLines = doc.splitTextToSize(detail.value, pageWidth - margin - 55);
         doc.text(valueLines, margin + 35, yPosition);
-        
         yPosition += Math.max(5, valueLines.length * 5);
-        
+
         if (index < details.length - 1) {
           doc.setDrawColor(238, 238, 238);
           doc.setLineWidth(0.1);
@@ -175,12 +148,9 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
 
       yPosition += 10;
 
-      // ═══════════════════════════════════════════════════════════════════
-      // CUSTOMER INFORMATION SECTION
-      // ═══════════════════════════════════════════════════════════════════
+      // ── CUSTOMER INFORMATION ──────────────────────────────────────────
       doc.setFillColor(255, 250, 205);
       doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
-      
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
@@ -199,13 +169,13 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(102, 102, 102);
         doc.text(info.label, margin + 5, yPosition);
-        
+
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
-        doc.text(info.value, margin + 35, yPosition);
-        
-        yPosition += 5;
-        
+        const lines = doc.splitTextToSize(info.value, pageWidth - margin - 55);
+        doc.text(lines, margin + 35, yPosition);
+        yPosition += Math.max(5, lines.length * 5);
+
         if (index < customerInfo.length - 1) {
           doc.setDrawColor(238, 238, 238);
           doc.setLineWidth(0.1);
@@ -215,12 +185,9 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
 
       yPosition += 10;
 
-      // ═══════════════════════════════════════════════════════════════════
-      // SERVICES SECTION
-      // ═══════════════════════════════════════════════════════════════════
+      // ── SERVICES ─────────────────────────────────────────────────────
       doc.setFillColor(255, 250, 205);
       doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
-      
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
@@ -236,9 +203,68 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
 
       yPosition += 8;
 
-      // ═══════════════════════════════════════════════════════════════════
-      // IMPORTANT NOTES
-      // ═══════════════════════════════════════════════════════════════════
+      // ── DISCOUNT CODE SECTION (only if applied) ───────────────────────
+      if (discountInfo) {
+        doc.setFillColor(255, 215, 0);
+        doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text('DISCOUNT APPLIED', margin + 3, yPosition + 5);
+        yPosition += 12;
+
+        // Discount box
+        doc.setFillColor(255, 250, 205);
+        doc.setDrawColor(255, 215, 0);
+        doc.setLineWidth(1);
+        doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 35, 2, 2, 'FD');
+
+        yPosition += 8;
+
+        // Discount badge circle
+        doc.setFillColor(255, 215, 0);
+        doc.circle(margin + 20, yPosition + 8, 10, 'F');
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(`${discountInfo.discount}%`, margin + 20, yPosition + 7, { align: 'center' });
+        doc.setFontSize(7);
+        doc.text('OFF', margin + 20, yPosition + 12, { align: 'center' });
+
+        // Discount details
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(
+          discountInfo.type === 'corporate' ? 'Corporate Discount' : 'Employee Discount',
+          margin + 35, yPosition + 6
+        );
+
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 51, 51);
+
+        if (discountInfo.type === 'corporate') {
+          doc.text(`Company: ${discountInfo.companyName}`, margin + 35, yPosition + 12);
+          doc.text(`Corporate Code: ${discountCode}`, margin + 35, yPosition + 17);
+        } else {
+          doc.text(`Employee: ${discountInfo.employeeName}`, margin + 35, yPosition + 12);
+          doc.text(`Company: ${discountInfo.companyName}`, margin + 35, yPosition + 17);
+          doc.text(`Employee ID: ${discountCode}`, margin + 35, yPosition + 22);
+        }
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 100, 0);
+        doc.text(
+          `${discountInfo.discount}% discount will be applied at the branch`,
+          pageWidth / 2, yPosition + 28, { align: 'center' }
+        );
+
+        yPosition += 45;
+      }
+
+      // ── IMPORTANT NOTES ───────────────────────────────────────────────
       doc.setDrawColor(255, 215, 0);
       doc.setLineWidth(0.3);
       doc.setFillColor(255, 255, 240);
@@ -252,51 +278,42 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
       yPosition += 6;
 
       doc.setFont('helvetica', 'normal');
-      const notes = [
+      [
         '• Please arrive 10 minutes before your scheduled time.',
         '• Bring this confirmation along with a valid ID.',
         '• For any changes or cancellations, please contact us at least 24 hours in advance.'
-      ];
-
-      notes.forEach(note => {
+      ].forEach(note => {
         doc.text(note, margin + 5, yPosition);
         yPosition += 5;
       });
 
       yPosition += 10;
 
-      // ═══════════════════════════════════════════════════════════════════
-      // CLOSING MESSAGE
-      // ═══════════════════════════════════════════════════════════════════
+      // ── CLOSING ──────────────────────────────────────────────────────
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(0, 0, 0);
       doc.text('We look forward to serving you!', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 6;
-
       doc.setFont('helvetica', 'bold');
       doc.text('ANURA TYRES (Pvt) Ltd', pageWidth / 2, yPosition, { align: 'center' });
 
-      // ═══════════════════════════════════════════════════════════════════
-      // FOOTER
-      // ═══════════════════════════════════════════════════════════════════
+      // ── FOOTER ───────────────────────────────────────────────────────
       const footerY = pageHeight - 15;
-      
-      // Yellow footer line
       doc.setDrawColor(255, 215, 0);
       doc.setLineWidth(0.3);
       doc.line(margin, footerY, pageWidth - margin, footerY);
 
-      // Footer text
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(102, 102, 102);
-      doc.text('Your Trusted Tyre Specialists | www.anuratyres.lk | info@anuratyres.lk', 
-        pageWidth / 2, footerY + 5, { align: 'center' });
+      doc.text(
+        'Your Trusted Tyre Specialists | www.anuratyres.lk | info@anuratyres.lk',
+        pageWidth / 2, footerY + 5, { align: 'center' }
+      );
 
-      // Save PDF
       doc.save(`Anura_Tyres_Booking_${bookingId || 'Confirmation'}.pdf`);
-      
+
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -314,7 +331,7 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
       </div>
 
       <h2 className="text-3xl font-bold text-white mb-4">Booking Confirmed!</h2>
-      
+
       {bookingId && (
         <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-brand-yellow/10 border border-brand-yellow/20 rounded-lg">
           <Hash className="w-4 h-4 text-brand-yellow" />
@@ -327,11 +344,11 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
         successfully. We have sent a confirmation to {booking.customer.email}.
       </p>
 
-      <div className="bg-brand-card rounded-xl border border-white/10 p-6 mb-8 text-left">
+      {/* Booking Details Card */}
+      <div className="bg-brand-card rounded-xl border border-white/10 p-6 mb-6 text-left">
         <h3 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">
           Booking Details
         </h3>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex items-start gap-3">
             <MapPin className="w-5 h-5 text-brand-yellow mt-0.5" />
@@ -347,10 +364,7 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
               <p className="text-sm text-brand-gray">Date</p>
               <p className="font-medium text-white">
                 {booking.date?.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
+                  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                 })}
               </p>
             </div>
@@ -380,11 +394,40 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
         </div>
       </div>
 
+      {/* Discount badge — read-only, set from CustomerForm */}
+      {discountInfo && (
+        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-6 text-left flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-brand-yellow flex items-center justify-center flex-shrink-0">
+            <div className="text-center">
+              <p className="text-black font-bold text-sm leading-none">{discountInfo.discount}%</p>
+              <p className="text-black text-[10px] font-bold">OFF</p>
+            </div>
+          </div>
+          <div>
+            <p className="text-green-400 font-bold text-sm flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" />
+              {discountInfo.type === 'corporate' ? 'Corporate Discount Applied' : 'Employee Discount Applied'}
+            </p>
+            <p className="text-white text-sm font-mono font-bold mt-0.5">{discountCode}</p>
+            {discountInfo.companyName && (
+              <p className="text-brand-gray text-xs mt-0.5">Company: {discountInfo.companyName}</p>
+            )}
+            {discountInfo.employeeName && (
+              <p className="text-brand-gray text-xs">Employee: {discountInfo.employeeName}</p>
+            )}
+            <p className="text-xs text-green-400 mt-1">
+              {discountInfo.discount}% discount will be applied at the branch
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
       <div className="flex flex-col sm:flex-row justify-center gap-4">
         <Link to="/">
           <Button variant="outline" className="w-full sm:w-auto">Back to Home</Button>
         </Link>
-        <Button 
+        <Button
           onClick={generatePDF}
           disabled={generating}
           className="w-full sm:w-auto flex items-center justify-center gap-2"

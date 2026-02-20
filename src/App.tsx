@@ -12,6 +12,8 @@ import { BranchesPage } from './pages/BranchesPage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { ProductsPage } from './pages/ProductsPage';
+import { CorporateRegistration } from './components/CorporateRegistration';
+import { EmployeeRegistration } from './components/Employeeregistration';
 
 
 // ScrollToTop component to handle scroll restoration
@@ -37,6 +39,8 @@ export function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/products" element={<ProductsPage />} />
+        <Route path="/corporate/register" element={<CorporateRegistration />} />
+        <Route path="/employee/register" element={<EmployeeRegistration />} />
       </Routes>
     </Router>
   );
