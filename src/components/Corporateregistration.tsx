@@ -314,7 +314,18 @@ export function CorporateRegistration() {
 
       const existingCorporates = JSON.parse(localStorage.getItem('at_corporate_customers') || '[]');
       existingCorporates.push(corporateData);
-      localStorage.setItem('at_corporate_customers', JSON.stringify(existingCorporates));
+
+        const response = await fetch('https://anuratyres-backend-emm1774.vercel.app/api/corporate/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corporateData)
+      });
+
+const result = await response.json();
+if (result.success) {
+  setCorporateCode(result.corporateCode);
+  setSuccess(true);
+}
 
       await new Promise(resolve => setTimeout(resolve, 1000));
 

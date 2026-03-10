@@ -2,19 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '../ui/Button';
-import { ArrowRight, ShieldCheck, Clock, PenTool } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Clock, PenTool, Search } from 'lucide-react';
 
 export function HeroSection() {
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-brand-black">
       {/* Background Pattern */}
       <div className="absolute inset-0">
-  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-brand-yellow/20 via-transparent to-transparent"></div>
-  <div
-    className="absolute inset-0 bg-no-repeat bg-center bg-cover bg-fixed mix-blend-overlay"
-    style={{ backgroundImage: "url('./hero-bg.png')" }}
-  ></div>
-</div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-brand-yellow/20 via-transparent to-transparent"></div>
+        <div
+          className="absolute inset-0 bg-no-repeat bg-center bg-cover bg-fixed mix-blend-overlay"
+          style={{ backgroundImage: "url('./hero-bg.png')" }}
+        ></div>
+      </div>
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <motion.div
@@ -56,6 +56,18 @@ export function HeroSection() {
                 Request Quotation
               </Button>
             </Link>
+            {/* Scroll to search hint */}
+            <a
+              href="#tyre-search"
+              onClick={e => {
+                e.preventDefault();
+                document.getElementById('tyre-search')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="hidden sm:inline-flex items-center gap-2 px-6 py-3 rounded-md border border-white/10 text-brand-gray hover:text-white hover:border-white/30 transition-all text-base font-bold h-14"
+            >
+              <Search className="w-5 h-5" />
+              Find Tyres
+            </a>
           </div>
           
           {/* Trust Indicators */}
