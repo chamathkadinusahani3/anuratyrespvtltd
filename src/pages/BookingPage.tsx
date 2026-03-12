@@ -1,3 +1,4 @@
+// src/pages/BookingPage.tsx
 import React, { useState } from 'react';
 import { Layout } from '../components/layout/Layout';
 import { Button } from '../components/ui/Button';
@@ -46,11 +47,11 @@ export function BookingPage() {
     }
 
     switch (currentStep) {
-      case 'branch': setCurrentStep('category'); break;
-      case 'category': setCurrentStep('service'); break;
-      case 'service': setCurrentStep('date'); break;
-      case 'date': setCurrentStep('time'); break;
-      case 'time': setCurrentStep('details'); break;
+      case 'branch':   setCurrentStep('category'); break;
+      case 'category': setCurrentStep('service');  break;
+      case 'service':  setCurrentStep('date');     break;
+      case 'date':     setCurrentStep('time');     break;
+      case 'time':     setCurrentStep('details');  break;
     }
     window.scrollTo(0, 0);
   };
@@ -71,7 +72,12 @@ export function BookingPage() {
       }
     } catch (err: any) {
       console.error('Booking submission error:', err);
-      setError(err.message || 'Failed to submit booking. Please try again.');
+      // ✅ Handle slot conflict from backend (409 Conflict)
+      if (err.status === 409 || err.message?.includes('fully booked') || err.message?.includes('no longer available')) {
+        setError('Sorry, this time slot was just booked by someone else. Please go back and select a different time.');
+      } else {
+        setError(err.message || 'Failed to submit booking. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -80,22 +86,22 @@ export function BookingPage() {
   const handleBack = () => {
     setError(null);
     switch (currentStep) {
-      case 'category': setCurrentStep('branch'); break;
-      case 'service': setCurrentStep('category'); break;
-      case 'date': setCurrentStep('service'); break;
-      case 'time': setCurrentStep('date'); break;
-      case 'details': setCurrentStep('time'); break;
+      case 'category': setCurrentStep('branch');   break;
+      case 'service':  setCurrentStep('category'); break;
+      case 'date':     setCurrentStep('service');  break;
+      case 'time':     setCurrentStep('date');     break;
+      case 'details':  setCurrentStep('time');     break;
     }
   };
 
   const isNextDisabled = () => {
     switch (currentStep) {
-      case 'branch': return !booking.branch;
+      case 'branch':   return !booking.branch;
       case 'category': return !booking.category;
-      case 'service': return booking.services.length === 0;
-      case 'date': return !booking.date;
-      case 'time': return !booking.timeSlot;
-      case 'details': return (
+      case 'service':  return booking.services.length === 0;
+      case 'date':     return !booking.date;
+      case 'time':     return !booking.timeSlot;
+      case 'details':  return (
         !booking.customer.name ||
         !booking.customer.email ||
         !booking.customer.phone
@@ -113,14 +119,14 @@ export function BookingPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
         <div className="relative max-w-7xl mx-auto text-center">
-         <h1 className="text-4xl md:text-7xl font-black mb-6 uppercase tracking-tighter
-    text-transparent bg-clip-text bg-gradient-to-r 
-    from-[#FFCC00] from-10% 
-    via-[#FFFFFF] via-50% 
-    to-[#FF0000] to-90%
-    animate-gradient-move">
-    Book Your Service
-  </h1>
+          <h1 className="text-4xl md:text-7xl font-black mb-6 uppercase tracking-tighter
+            text-transparent bg-clip-text bg-gradient-to-r
+            from-[#FFCC00] from-10%
+            via-[#FFFFFF] via-50%
+            to-[#FF0000] to-90%
+            animate-gradient-move">
+            Book Your Service
+          </h1>
         </div>
       </div>
 
@@ -173,15 +179,19 @@ export function BookingPage() {
               <div className="flex justify-center">
                 <DatePicker
                   selectedDate={booking.date}
-                  onSelect={(date) => setBooking({ ...booking, date })}
+                  onSelect={(date) => setBooking({ ...booking, date, timeSlot: null })}
                 />
               </div>
             )}
 
+            {/* ✅ KEY CHANGE: pass branchName and selectedDate so TimeSlotPicker
+                can fetch real availability from the backend */}
             {currentStep === 'time' && (
               <TimeSlotPicker
                 selectedTime={booking.timeSlot}
                 onSelect={(timeSlot) => setBooking({ ...booking, timeSlot })}
+                branchName={booking.branch?.name ?? null}
+                selectedDate={booking.date}
               />
             )}
 
@@ -216,7 +226,12 @@ export function BookingPage() {
                 disabled={isNextDisabled() || isSubmitting}
                 className="w-32"
               >
-                {isSubmitting ? 'Submitting...' : currentStep === 'details' ? 'Confirm' : <>Next <ArrowRight className="ml-2 w-4 h-4" /></>}
+                {isSubmitting
+                  ? 'Submitting...'
+                  : currentStep === 'details'
+                    ? 'Confirm'
+                    : <> Next <ArrowRight className="ml-2 w-4 h-4" /></>
+                }
               </Button>
             </div>
           )}

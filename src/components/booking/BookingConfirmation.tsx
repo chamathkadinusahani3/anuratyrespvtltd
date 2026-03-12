@@ -48,9 +48,10 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
         });
 
         // 2️⃣ Patch firebaseUid into the MongoDB booking so admin PATCH can sync back
-        //    This is a best-effort call — if it fails, admin sync just won't work for this booking
+        // ✅ FIX: VITE_API_URL already includes /api, so don't add /api/ prefix again
         try {
-          await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/${bookingId}`, {
+          const apiUrl = import.meta.env.VITE_API_URL; // e.g. https://anuratyres-backend.vercel.app/api
+          await fetch(`${apiUrl}/bookings/${bookingId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ firebaseUid: user.uid }),
