@@ -1,5 +1,5 @@
 // src/pages/BookingPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/layout/Layout';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -13,39 +13,33 @@ import { CustomerForm } from '../components/booking/CustomerForm';
 import { BookingConfirmation } from '../components/booking/BookingConfirmation';
 import { bookingAPI } from '../services/api';
 import book from '../assets/book.png';
-import {
-  BookingState,
-  BookingStep
-} from '../types';
+import { BookingState, BookingStep } from '../types';
+import { useActivityTracker } from '../hooks/useActivityTracker';
 
 export function BookingPage() {
+  const { track } = useActivityTracker({ type: 'page_view', page: '/booking' });
+
   const [currentStep, setCurrentStep] = useState<BookingStep>('branch');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
-
   const [booking, setBooking] = useState<BookingState>({
     branch: null,
     category: null,
     services: [],
     date: null,
     timeSlot: null,
-    customer: {
-      name: '',
-      email: '',
-      phone: '',
-      vehicleNo: ''
-    }
+    customer: { name: '', email: '', phone: '', vehicleNo: '' },
   });
+
+  // Track when booking funnel starts
+  useEffect(() => {
+    track({ type: 'booking_started', page: '/booking' });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleNext = async () => {
     setError(null);
-
-    if (currentStep === 'details') {
-      await handleSubmitBooking();
-      return;
-    }
-
+    if (currentStep === 'details') { await handleSubmitBooking(); return; }
     switch (currentStep) {
       case 'branch':   setCurrentStep('category'); break;
       case 'category': setCurrentStep('service');  break;
@@ -59,20 +53,23 @@ export function BookingPage() {
   const handleSubmitBooking = async () => {
     setIsSubmitting(true);
     setError(null);
-
     try {
       const response = await bookingAPI.createBooking(booking);
-
       if (response.success) {
         setBookingId(response.booking?.bookingId || null);
         setCurrentStep('confirmation');
+        track({
+          type: 'booking_completed',
+          page: '/booking',
+          branch: booking.branch?.name ?? undefined,
+          item: booking.services.map(s => s.name).join(', '),
+        });
         window.scrollTo(0, 0);
       } else {
         setError(response.message || 'Failed to create booking');
       }
     } catch (err: any) {
       console.error('Booking submission error:', err);
-      // ✅ Handle slot conflict from backend (409 Conflict)
       if (err.status === 409 || err.message?.includes('fully booked') || err.message?.includes('no longer available')) {
         setError('Sorry, this time slot was just booked by someone else. Please go back and select a different time.');
       } else {
@@ -101,22 +98,15 @@ export function BookingPage() {
       case 'service':  return booking.services.length === 0;
       case 'date':     return !booking.date;
       case 'time':     return !booking.timeSlot;
-      case 'details':  return (
-        !booking.customer.name ||
-        !booking.customer.email ||
-        !booking.customer.phone
-      );
-      default: return false;
+      case 'details':  return !booking.customer.name || !booking.customer.email || !booking.customer.phone;
+      default:         return false;
     }
   };
 
   return (
     <Layout>
       <div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-10"
-          style={{ backgroundImage: `url(${book})` }}
-        />
+        <div className="absolute inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: `url(${book})` }} />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
         <div className="relative max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-7xl font-black mb-6 uppercase tracking-tighter
@@ -133,9 +123,7 @@ export function BookingPage() {
       <div className="min-h-screen bg-black py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {currentStep !== 'confirmation' && (
-            <div className="mb-12">
-              <StepIndicator currentStep={currentStep} />
-            </div>
+            <div className="mb-12"><StepIndicator currentStep={currentStep} /></div>
           )}
 
           {error && (
@@ -151,7 +139,6 @@ export function BookingPage() {
                 onSelect={(branch) => setBooking({ ...booking, branch, category: null, services: [] })}
               />
             )}
-
             {currentStep === 'category' && booking.branch && (
               <CategorySelector
                 selectedBranch={booking.branch}
@@ -159,7 +146,6 @@ export function BookingPage() {
                 onSelect={(category) => setBooking({ ...booking, category, services: [] })}
               />
             )}
-
             {currentStep === 'service' && booking.category && (
               <ServiceSelector
                 category={booking.category}
@@ -174,7 +160,6 @@ export function BookingPage() {
                 }}
               />
             )}
-
             {currentStep === 'date' && (
               <div className="flex justify-center">
                 <DatePicker
@@ -183,9 +168,6 @@ export function BookingPage() {
                 />
               </div>
             )}
-
-            {/* ✅ KEY CHANGE: pass branchName and selectedDate so TimeSlotPicker
-                can fetch real availability from the backend */}
             {currentStep === 'time' && (
               <TimeSlotPicker
                 selectedTime={booking.timeSlot}
@@ -194,19 +176,14 @@ export function BookingPage() {
                 selectedDate={booking.date}
               />
             )}
-
             {currentStep === 'details' && (
               <CustomerForm
                 data={booking.customer}
                 onChange={(customer) => setBooking({ ...booking, customer })}
               />
             )}
-
             {currentStep === 'confirmation' && (
-              <BookingConfirmation
-                booking={booking}
-                bookingId={bookingId}
-              />
+              <BookingConfirmation booking={booking} bookingId={bookingId} />
             )}
           </div>
 
@@ -220,12 +197,7 @@ export function BookingPage() {
               >
                 <ArrowLeft className="mr-2 w-4 h-4" /> Back
               </Button>
-
-              <Button
-                onClick={handleNext}
-                disabled={isNextDisabled() || isSubmitting}
-                className="w-32"
-              >
+              <Button onClick={handleNext} disabled={isNextDisabled() || isSubmitting} className="w-32">
                 {isSubmitting
                   ? 'Submitting...'
                   : currentStep === 'details'

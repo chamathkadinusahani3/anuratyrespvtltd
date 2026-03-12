@@ -132,6 +132,7 @@ export function RegisterPage() {
           value={form[key]}
           onChange={e => setForm({ ...form, [key]: e.target.value })}
           placeholder={placeholder}
+          autoComplete="off"
           className="w-full bg-neutral-900 border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-white text-sm placeholder-neutral-700 focus:outline-none focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow/30 transition-all"
         />
       </div>
@@ -244,7 +245,7 @@ export function RegisterPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4" autoComplete="off">
             {field('name',   'Full Name',    'John Doe',         'text',  <User  className="w-4 h-4" />)}
             {field('email',  'Email',        'you@example.com',  'email', <Mail  className="w-4 h-4" />)}
             {field('phone',  'Phone Number', '077 123 4567',     'tel',   <Phone className="w-4 h-4" />)}
@@ -259,6 +260,7 @@ export function RegisterPage() {
                   value={form.password}
                   onChange={e => setForm({ ...form, password: e.target.value })}
                   placeholder="Min. 6 characters"
+                  autoComplete="new-password"
                   className="w-full bg-neutral-900 border border-white/10 rounded-xl pl-11 pr-12 py-3.5 text-white text-sm placeholder-neutral-700 focus:outline-none focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow/30 transition-all"
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -291,6 +293,7 @@ export function RegisterPage() {
                   value={form.confirmPassword}
                   onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
                   placeholder="Repeat your password"
+                  autoComplete="new-password"
                   className="w-full bg-neutral-900 border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-white text-sm placeholder-neutral-700 focus:outline-none focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow/30 transition-all"
                 />
                 {form.confirmPassword && (

@@ -103,7 +103,6 @@ export function LoginPage() {
           transition={{ duration: 0.8, ease: 'easeOut' }}
           className="relative z-10 text-center max-w-sm"
         >
-          {/* Logo mark */}
           {/* Logo */}
             <Link to="/" className="flex-shrink-0 flex items-center gap-3">
               <img src={logo} alt="Anura Tyres Logo" className="h-12 w-auto object-contain" />
@@ -201,7 +200,7 @@ export function LoginPage() {
           </div>
 
           {/* Email/Password Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
             {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-neutral-400 mb-1.5 uppercase tracking-wider">
@@ -214,6 +213,7 @@ export function LoginPage() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
+                  autoComplete="off"
                   required
                   className="w-full bg-neutral-900 border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-white text-sm placeholder-neutral-700 focus:outline-none focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow/30 transition-all"
                 />
@@ -239,6 +239,7 @@ export function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  autoComplete="new-password"
                   required
                   className="w-full bg-neutral-900 border border-white/10 rounded-xl pl-11 pr-12 py-3.5 text-white text-sm placeholder-neutral-700 focus:outline-none focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow/30 transition-all"
                 />
