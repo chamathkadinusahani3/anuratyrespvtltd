@@ -1,148 +1,167 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
+
+const SERVICES = [
+  {
+    title: 'Anura Tyres',
+    tagline: 'Precision. Performance. Grip.',
+    description: 'Premium tyres, wheel alignment, balancing and alloy wheels for all vehicle types — passenger cars to heavy vehicles.',
+    image: 'anura.png',
+    accentColor: 'brand-yellow',
+    accentHex: '#FFCC00',
+    tag: 'Tyres & Wheels',
+  },
+  {
+    title: 'Mechanix',
+    tagline: 'Engineered to Last.',
+    description: 'Expert mechanical repairs, engine tune-ups, suspension work and full vehicle servicing by certified technicians.',
+    image: 'machanix.png',
+    accentColor: 'brand-red',
+    accentHex: '#FF0000',
+    tag: 'Mechanical Services',
+  },
+  {
+    title: 'Truck & Bus',
+    tagline: 'Built for the Long Haul.',
+    description: 'Heavy vehicle tyre fitting, alignment, suspension overhaul and fleet maintenance — keeping commercial fleets moving.',
+    image: 'truck.png',
+    accentColor: 'blue-400',
+    accentHex: '#60a5fa',
+    tag: 'Heavy Vehicles',
+  },
+];
 
 export function ServicesPreview() {
-  const services = [
-    {
-      title: 'Anura Tyres',
-      description: 'Premium tyres, wheel alignment, and alloy wheels for all vehicle types.',
-      image: 'anura.png',
-      accent: 'text-yellow-400',
-      blobColor: 'fill-yellow-500/10',
-      border: 'border-yellow-500/20',
-      animation: 'slide-right'
-    },
-    {
-      title: 'Mechanix',
-      description: 'Expert mechanical repairs, engine tune-ups, and full vehicle servicing.',
-      image: 'machanix.png',
-      accent: 'text-red-600',
-      blobColor: 'fill-red-600/10',
-      border: 'border-red-600/20',
-      animation: 'slide-left'
-    },
-    {
-      title: 'Truck & Bus',
-      description: 'Heavy vehicles, tire alignment, suspension and more.',
-      image: 'truck.png',
-      accent: 'text-blue-500',
-      blobColor: 'fill-blue-500/10',
-      border: 'border-blue-500/20',
-      animation: 'slide-right'
-    }
-  ];
-
-  // Refs for each service element
   const refs = useRef<(HTMLDivElement | null)[]>([]);
-  const [visible, setVisible] = useState<boolean[]>(services.map(() => false));
+  const [visible, setVisible] = useState<boolean[]>(SERVICES.map(() => false));
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
         entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const index = refs.current.indexOf(entry.target as HTMLDivElement);
-            if (index !== -1) {
-              setVisible(prev => {
-                const newVis = [...prev];
-                newVis[index] = true;
-                return newVis;
-              });
-            }
+          const index = refs.current.indexOf(entry.target as HTMLDivElement);
+          if (entry.isIntersecting && index !== -1) {
+            setVisible(prev => { const n = [...prev]; n[index] = true; return n; });
           }
         });
       },
-      { threshold: 0.3 } // triggers when 30% visible
+      { threshold: 0.25 }
     );
-
-    refs.current.forEach(ref => ref && observer.observe(ref));
-
-    return () => {
-      refs.current.forEach(ref => ref && observer.unobserve(ref));
-    };
+    refs.current.forEach(r => r && observer.observe(r));
+    return () => refs.current.forEach(r => r && observer.unobserve(r));
   }, []);
 
   return (
-    <section className="py-24 bg-black text-white">
-      <div className="max-w-7xl mx-auto px-6 space-y-16">
+    <section className="py-20 bg-black px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
 
-        {/* SECTION HEADING */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
-            Comprehensive Vehicle Care
-          </h2>
-          <p className="text-zinc-400 text-xl md:text-2xl italic leading-relaxed">
-            From routine maintenance to complex repairs, our specialized divisions ensure your vehicle performs at its best.
-          </p>
+        {/* Section header */}
+        <div className="mb-16">
+          <p className="text-brand-yellow text-xs font-bold tracking-[0.3em] uppercase mb-3">What We Do</p>
+          <div className="flex items-end justify-between">
+            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+              COMPREHENSIVE <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-brand-red">VEHICLE CARE</span>
+            </h2>
+            <Link
+              to="/services"
+              className="hidden md:flex items-center gap-2 text-sm text-gray-400 hover:text-brand-yellow transition-colors duration-200 font-medium group"
+            >
+              All services
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+            </Link>
+          </div>
         </div>
 
-        {/* SERVICE CARDS */}
-        {services.map((service, index) => (
-          <div
-            key={service.title}
-            ref={el => (refs.current[index] = el)}
-            className={`relative flex flex-col md:flex-row items-center min-h-[500px] w-full ${
-              index % 2 !== 0 ? 'md:flex-row-reverse' : ''
-            }`}
-          >
-            {/* MAIN CONTAINER */}
-            <div className={`absolute inset-0 bg-zinc-900/40 border ${service.border} rounded-[60px] md:rounded-[100px] -z-10`} />
-
-            {/* DECORATIVE BLOB */}
-            <div className={`absolute inset-0 opacity-40 -z-10 overflow-hidden rounded-[60px] md:rounded-[100px]`}>
-              <svg viewBox="0 0 500 500" className={`absolute -right-20 -bottom-20 w-[120%] h-[120%] ${service.blobColor}`}>
-                <path d="M414,332.5Q372,415,283.5,431Q195,447,133,382Q71,317,89,232.5Q107,148,188,111Q269,74,362.5,112Q456,150,435,241.25Q414,332.5Z" />
-              </svg>
-            </div>
-
-            {/* IMAGE / CLIPART */}
-            <div
-              className={`w-full md:w-1/2 flex justify-center p-8 md:p-12 relative transition-all duration-1000 ${
-                visible[index]
-                  ? 'translate-x-0 opacity-100'
-                  : service.animation === 'slide-left'
-                  ? '-translate-x-20 opacity-0'
-                  : 'translate-x-20 opacity-0'
-              }`}
-            >
-              <img
-                src={service.image}
-                alt={service.title}
-                className="max-h-[350px] w-auto drop-shadow-2xl z-20 transform hover:scale-105 transition-transform duration-500"
-              />
-              <div className={`absolute top-1/4 left-1/4 w-12 h-12 rounded-full blur-2xl ${service.accent.replace('text', 'bg')} opacity-30 animate-pulse`} />
-            </div>
-
-            {/* TEXT */}
-            <div
-              className={`w-full md:w-1/2 p-10 md:p-20 z-20 transition-all duration-1000 ${
-                visible[index]
-                  ? 'translate-x-0 opacity-100'
-                  : service.animation === 'slide-left'
-                  ? '-translate-x-20 opacity-0'
-                  : 'translate-x-20 opacity-0'
-              }`}
-            >
-              <h3 className={`text-5xl md:text-6xl font-bold mb-6 tracking-tight ${service.accent}`}>
-                {service.title}
-              </h3>
-              <p className="text-zinc-400 text-xl italic leading-relaxed mb-10 max-w-md">
-                {service.description}
-              </p>
-              <Link
-                to="/services"
-                className={`group flex items-center text-xl font-bold uppercase tracking-widest ${service.accent}`}
+        {/* Service rows */}
+        <div className="space-y-5">
+          {SERVICES.map((service, index) => {
+            const isEven = index % 2 === 0;
+            return (
+              <div
+                key={service.title}
+                ref={el => (refs.current[index] = el)}
+                className={`group bg-neutral-900 border border-white/8 rounded-2xl overflow-hidden hover:border-white/15 transition-all duration-500 hover:shadow-[0_4px_40px_rgba(0,0,0,0.4)]
+                  flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'}`}
               >
-                Learn more
-                <div className={`ml-4 p-2 rounded-full border ${service.border} group-hover:translate-x-3 transition-all duration-300`}>
-                  <ArrowRight className="w-6 h-6" />
+                {/* Image panel */}
+                <div
+                  className={`relative w-full md:w-2/5 min-h-[260px] flex items-center justify-center overflow-hidden bg-neutral-800
+                    transition-all duration-1000
+                    ${visible[index] ? 'opacity-100 translate-x-0' : isEven ? 'opacity-0 -translate-x-8' : 'opacity-0 translate-x-8'}`}
+                >
+                  {/* Accent glow behind image */}
+                  <div
+                    className="absolute inset-0 opacity-20"
+                    style={{ background: `radial-gradient(circle at center, ${service.accentHex}40 0%, transparent 70%)` }}
+                  />
+                  <img
+                    src={service.image}
+                    alt={service.title}
+                    className="relative z-10 max-h-52 w-auto object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-700"
+                  />
+                  {/* Tag pill overlaid on image */}
+                  <span
+                    className="absolute bottom-4 left-4 text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full border"
+                    style={{ color: service.accentHex, borderColor: `${service.accentHex}40`, backgroundColor: `${service.accentHex}12` }}
+                  >
+                    {service.tag}
+                  </span>
                 </div>
-              </Link>
-            </div>
 
-          </div>
-        ))}
+                {/* Text panel */}
+                <div
+                  className={`flex-1 p-8 md:p-12 flex flex-col justify-center
+                    transition-all duration-1000 delay-100
+                    ${visible[index] ? 'opacity-100 translate-x-0' : isEven ? 'opacity-0 translate-x-8' : 'opacity-0 -translate-x-8'}`}
+                >
+                  {/* Accent top bar */}
+                  <div
+                    className="w-10 h-[3px] rounded-full mb-5"
+                    style={{ backgroundColor: service.accentHex }}
+                  />
+
+                  <p
+                    className="text-xs font-bold tracking-[0.25em] uppercase mb-2"
+                    style={{ color: service.accentHex }}
+                  >
+                    {service.tagline}
+                  </p>
+
+                  <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-4">
+                    {service.title}
+                  </h3>
+
+                  <p className="text-gray-400 text-sm leading-relaxed mb-8 max-w-md">
+                    {service.description}
+                  </p>
+
+                  <Link
+                    to="/services"
+                    className="inline-flex items-center gap-2 text-sm font-bold transition-colors duration-200 group/link w-fit"
+                    style={{ color: service.accentHex }}
+                  >
+                    Learn more
+                    <span
+                      className="w-7 h-7 rounded-full border flex items-center justify-center group-hover/link:translate-x-1 transition-transform duration-200"
+                      style={{ borderColor: `${service.accentHex}40` }}
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Mobile CTA */}
+        <div className="mt-8 md:hidden text-center">
+          <Link to="/services" className="inline-flex items-center gap-2 text-sm text-brand-yellow font-semibold">
+            All services <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
       </div>
     </section>
   );
