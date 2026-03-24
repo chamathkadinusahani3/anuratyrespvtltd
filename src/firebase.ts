@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Replace these values with your actual Firebase project config
+//  Replace these values with your actual Firebase project config
 const firebaseConfig = {
   apiKey: "AIzaSyBwuqRQTAWQRMy1Aqw_fs0FAnyfWmoPv1s",
   authDomain: "project-1-27ab5.firebaseapp.com",

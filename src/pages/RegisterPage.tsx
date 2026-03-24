@@ -25,7 +25,7 @@ const passwordStrength = (pwd: string) => {
   if (/[A-Z]/.test(pwd)) score++;
   if (/[0-9]/.test(pwd)) score++;
   if (/[^A-Za-z0-9]/.test(pwd)) score++;
-  return score; // 0-4
+  return score; //  0-4
 };
 
 const strengthLabel = ['Too short', 'Weak', 'Fair', 'Good', 'Strong'];

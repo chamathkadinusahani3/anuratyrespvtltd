@@ -83,7 +83,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex bg-neutral-950 text-white overflow-hidden">
 
-      {/* ── Left Panel (decorative) ── */}
+      {/*  ── Left Panel (decorative) ── */}
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden flex-col items-center justify-center p-16 bg-black">
         {/* Animated tyre tread pattern */}
         <div className="absolute inset-0 opacity-[0.04]"
