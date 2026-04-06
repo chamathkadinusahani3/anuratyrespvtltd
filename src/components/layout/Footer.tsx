@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import logo from "../../assets/logo.png";
-import { Facebook, Instagram, Twitter, MapPin, Phone, Mail } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, MapPin, Phone, Mail  } from 'lucide-react';
 export function Footer() {
   return (
     <footer className="bg-black border-t border-white/5 pt-16 pb-8">
@@ -29,26 +29,26 @@ export function Footer() {
           </Link>
             <p className="text-brand-gray text-sm leading-relaxed mb-6">
               Premium tyre solutions, expert mechanical repairs, and heavy
-              vehicle services across Sri Lanka. Trusted since 1995.
+              vehicle services across Sri Lanka. Trusted since 1983.
             </p>
             <div className="flex space-x-4">
               <a
-                href="#"
+                href="https://www.facebook.com/ANURATYRES/"
                 className="text-brand-gray hover:text-brand-yellow transition-colors">
 
                 <Facebook className="w-5 h-5" />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/anuratyres/"
                 className="text-brand-gray hover:text-brand-yellow transition-colors">
 
                 <Instagram className="w-5 h-5" />
               </a>
               <a
-                href="#"
+                href="https://lk.linkedin.com/company/anuratyres"
                 className="text-brand-gray hover:text-brand-yellow transition-colors">
 
-                <Twitter className="w-5 h-5" />
+                <Linkedin  className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -119,12 +119,12 @@ export function Footer() {
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-brand-yellow flex-shrink-0" />
                 <span className="text-brand-gray text-sm">
-                  123 High Level Road, Pannipitiya, Sri Lanka
+                  278/2 High Level Road, Pannipitiya, Sri Lanka
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-brand-yellow flex-shrink-0" />
-                <span className="text-brand-gray text-sm">+94 11 234 5678</span>
+                <span className="text-brand-gray text-sm">+94 77 578 5785</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-brand-yellow flex-shrink-0" />

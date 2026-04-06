@@ -22,7 +22,6 @@ export function BookingPage() {
   const [currentStep, setCurrentStep] = useState<BookingStep>('branch');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [bookingId, setBookingId] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingState>({
     branch: null,
     category: null,
@@ -56,7 +55,8 @@ export function BookingPage() {
     try {
       const response = await bookingAPI.createBooking(booking);
       if (response.success) {
-        setBookingId(response.booking?.bookingId || null);
+        // bookingId is now generated inside BookingConfirmation — no need to
+        // capture the backend ID here anymore.
         setCurrentStep('confirmation');
         track({
           type: 'booking_completed',
@@ -183,7 +183,7 @@ export function BookingPage() {
               />
             )}
             {currentStep === 'confirmation' && (
-              <BookingConfirmation booking={booking} bookingId={bookingId} />
+              <BookingConfirmation booking={booking} />
             )}
           </div>
 

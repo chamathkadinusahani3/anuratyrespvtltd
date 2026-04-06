@@ -13,6 +13,7 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@emotion/react": "^11.13.3",
     "aos": "^2.3.4",
     "firebase": "^12.10.0",
@@ -24,6 +25,7 @@
     "react-dom": "^18.3.1",
     "react-helmet-async": "^2.0.5",
     "react-router-dom": "^6.30.3",
+    "twilio": "^5.13.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -51,3 +51,18 @@
 .slide-right {
   animation: slide-right 0.8s ease forwards;
 }
+
+/* src/index.css or globals.css */
+input,
+textarea,
+select {
+  text-transform: uppercase;
+}
+
+/* Exceptions — these must NOT be uppercased */
+input[type="password"],
+input[type="email"],
+
+input[name="search"] {
+  text-transform: none;
+}

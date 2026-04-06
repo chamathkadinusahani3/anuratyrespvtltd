@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Calendar, Clock, MapPin, Hash, Download, Loader2 } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, MapPin, Hash, Download, Loader2, Mail } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { BookingState } from '../../types';
 import logo from '../../assets/logo.png';
@@ -8,179 +8,237 @@ import jsPDF from 'jspdf';
 import { db } from '../../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import emailjs from '@emailjs/browser';
+
+// ── EmailJS config ────────────────────────────────────────────────────────────
+const EMAILJS_SERVICE_ID  = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PUBLIC_KEY  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+// ── Service-wise booking ID generator ────────────────────────────────────────
+const SERVICE_PREFIXES: Record<string, string> = {
+  'wheel balancing':    'WB',
+  'wheel alignment':    'AL',
+  'tyre replacement':   'TR',
+  'tire replacement':   'TR',
+  'tyre rotation':      'RT',
+  'tire rotation':      'RT',
+  'nitrogen filling':   'NF',
+  'flat repair':        'FR',
+  'puncture repair':    'PR',
+  'brake service':      'BS',
+  'suspension check':   'SC',
+  'oil change':         'OC',
+  'battery service':    'BAT',
+};
+
+function getServicePrefix(serviceName: string): string {
+  const key = serviceName.toLowerCase().trim();
+  if (SERVICE_PREFIXES[key]) return SERVICE_PREFIXES[key];
+  for (const [k, v] of Object.entries(SERVICE_PREFIXES)) {
+    if (key.includes(k.split(' ')[0])) return v;
+  }
+  return serviceName.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() || 'SV';
+}
+
+function generateBookingId(
+  services: Array<{ name: string }>,
+  branchName: string,
+  date: Date,
+): string {
+  const prefixes = [...new Set(services.map(s => getServicePrefix(s.name)))];
+  const serviceSegment = prefixes.length > 0 ? prefixes.join('-') : 'SV';
+
+  const branchSegment = branchName
+    .replace(/[^a-zA-Z]/g, '')
+    .slice(0, 3)
+    .toUpperCase() || 'HQ';
+
+  const d = (date instanceof Date && !isNaN(date.getTime())) ? date : new Date();
+  const dateSegment =
+    d.getFullYear().toString() +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    String(d.getDate()).padStart(2, '0');
+
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const random = Array.from({ length: 4 }, () =>
+    chars[Math.floor(Math.random() * chars.length)],
+  ).join('');
+
+  return `${serviceSegment}-${branchSegment}-${dateSegment}-${random}`;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface BookingConfirmationProps {
   booking: BookingState;
-  bookingId?: string | null;
 }
 
-export function BookingConfirmation({ booking, bookingId }: BookingConfirmationProps) {
-  const [generating, setGenerating] = useState(false);
-  const [savedToDashboard, setSavedToDashboard] = useState(false);
+export function BookingConfirmation({ booking }: BookingConfirmationProps) {
+  const [generating, setGenerating]   = useState(false);
+  const [savedToDashboard, setSaved]  = useState(false);
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  // Generate the service-wise ID exactly once and freeze it in a ref.
+  // Never recomputed on re-renders — stable for Firestore, email, and PDF.
+  const bookingIdRef = useRef<string>(
+    generateBookingId(
+      booking.services,
+      booking.branch?.name ?? '',
+      booking.date ?? new Date(),
+    ),
+  );
+  const bookingId = bookingIdRef.current;
+
+  // Prevents double-fire in React 18 Strict Mode (mount → unmount → remount)
+  const hasRun = useRef(false);
 
   const discountInfo = (booking.customer as any).discountInfo;
   const discountCode = (booking.customer as any).discountCode;
 
-  // ── Auto-save to Firestore + patch firebaseUid into MongoDB ─────────────
   useEffect(() => {
-    const saveAppointment = async () => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
+    const run = async () => {
       const auth = getAuth();
       const user = auth.currentUser;
-      if (!user || !bookingId) return;
 
-      try {
-        // 1️⃣ Save to Firestore for real-time dashboard updates
-        await setDoc(doc(db, 'users', user.uid, 'appointments', bookingId), {
-          bookingId,
-          date: booking.date?.toISOString().split('T')[0] ?? '',
-          time: booking.timeSlot ?? '',
-          branch: booking.branch?.name ?? '',
-          branchAddress: booking.branch?.address ?? '',
-          branchPhone: booking.branch?.phone ?? '',
-          services: booking.services.map(s => s.name),
-          status: 'upcoming',
-          customerName: booking.customer.name,
-          customerEmail: booking.customer.email,
-          customerPhone: booking.customer.phone,
-          vehicleNo: booking.customer.vehicleNo ?? '',
-          ...(discountInfo ? { discountInfo, discountCode } : {}),
-          createdAt: new Date().toISOString(),
-        });
-
-        // 2️⃣ Patch firebaseUid into the MongoDB booking so admin PATCH can sync back
-        // ✅ FIX: VITE_API_URL already includes /api, so don't add /api/ prefix again
+      // 1. Save to Firestore
+      if (user && bookingId) {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL; // e.g. https://anuratyres-backend.vercel.app/api
-          await fetch(`${apiUrl}/bookings/${bookingId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ firebaseUid: user.uid }),
+          await setDoc(doc(db, 'users', user.uid, 'appointments', bookingId), {
+            bookingId,
+            date:          booking.date?.toISOString().split('T')[0] ?? '',
+            time:          booking.timeSlot ?? '',
+            branch:        booking.branch?.name ?? '',
+            branchAddress: booking.branch?.address ?? '',
+            branchPhone:   booking.branch?.phone ?? '',
+            services:      booking.services.map(s => s.name),
+            status:        'upcoming',
+            customerName:  booking.customer.name,
+            customerEmail: booking.customer.email,
+            customerPhone: booking.customer.phone,
+            vehicleNo:     booking.customer.vehicleNo ?? '',
+            ...(discountInfo ? { discountInfo, discountCode } : {}),
+            createdAt: new Date().toISOString(),
           });
-          console.log('✅ firebaseUid patched into MongoDB booking');
-        } catch (patchErr) {
-          console.warn('⚠️ Could not patch firebaseUid into MongoDB:', patchErr);
+          setSaved(true);
+          try {
+            const apiUrl = import.meta.env.VITE_API_URL;
+            await fetch(`${apiUrl}/bookings/${bookingId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ firebaseUid: user.uid }),
+            });
+          } catch {}
+        } catch (err) {
+          console.error('Failed to save appointment:', err);
         }
+      }
 
-        setSavedToDashboard(true);
+      // 2. Send email via EmailJS
+      if (!booking.customer.email) return;
+      setEmailStatus('sending');
+      try {
+        const formattedDate = booking.date?.toLocaleDateString('en-US', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        }) ?? '';
+
+        await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          {
+            to_email:       booking.customer.email,
+            to_name:        booking.customer.name,
+            customer_phone: booking.customer.phone,
+            vehicle_no:     booking.customer.vehicleNo || 'N/A',
+            booking_id:     bookingId,
+            branch_name:    booking.branch?.name ?? '',
+            branch_address: booking.branch?.address ?? '',
+            branch_phone:   booking.branch?.phone ?? '',
+            booking_date:   formattedDate,
+            booking_time:   booking.timeSlot ?? '',
+            services_list:  booking.services.map(s => `• ${s.name}`).join('\n'),
+            discount_block: discountInfo
+              ? `${discountInfo.discount}% ${discountInfo.type === 'corporate' ? 'Corporate' : 'Employee'} Discount${discountInfo.companyName ? ` — ${discountInfo.companyName}` : ''}`
+              : '',
+          },
+          EMAILJS_PUBLIC_KEY,
+        );
+        setEmailStatus('sent');
       } catch (err) {
-        console.error('Failed to save appointment:', err);
+        console.error('EmailJS send failed:', err);
+        setEmailStatus('error');
       }
     };
 
-    saveAppointment();
-  }, [bookingId]);
+    run();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // empty — runs once on mount; bookingId is stable via ref
 
   const generatePDF = async () => {
     setGenerating(true);
-
     try {
-      const loadLogo = (): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(img, 0, 0);
-              resolve(canvas.toDataURL('image/png'));
-            } else {
-              reject('Canvas context not available');
-            }
-          };
-          img.onerror = () => reject('Logo failed to load');
-          img.src = logo;
-        });
-      };
-
+      const loadLogo = (): Promise<string> => new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width; canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx ? (ctx.drawImage(img, 0, 0), resolve(canvas.toDataURL('image/png'))) : reject('no ctx');
+        };
+        img.onerror = () => reject('logo failed');
+        img.src = logo;
+      });
       let logoData: string | null = null;
-      try {
-        logoData = await loadLogo();
-      } catch {
-        console.log('Logo not loaded, continuing without it');
-      }
+      try { logoData = await loadLogo(); } catch {}
 
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth  = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 20;
-      let yPosition = 20;
+      let y = 20;
 
-      doc.setFillColor(255, 215, 0);
-      doc.rect(0, 0, pageWidth, 40, 'F');
-
-      if (logoData) {
-        try { doc.addImage(logoData, 'PNG', 15, 8, 25, 25); } catch {}
-      }
-
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(28);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ANURA TYRES', pageWidth / 2, 18, { align: 'center' });
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text('(Pvt) Ltd', pageWidth / 2, 24, { align: 'center' });
-      doc.setFontSize(9);
-      doc.setTextColor(51, 51, 51);
-      doc.text('278/2 High Level Rd, Pannipitiya | Tel: 077 578 5785', pageWidth / 2, 32, { align: 'center' });
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.5);
-      doc.line(margin, 42, pageWidth - margin, 42);
-
-      yPosition = 55;
-
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(255, 215, 0);
-      doc.text('BOOKING CONFIRMED', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 10;
-
-      if (bookingId) {
-        doc.setFontSize(12);
-        doc.setFont('courier', 'bold');
-        doc.setTextColor(255, 215, 0);
-        doc.text(`Booking ID: ${bookingId}`, pageWidth / 2, yPosition, { align: 'center' });
-        yPosition += 10;
-      }
-
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(0, 0, 0);
-      const thankYouText = `Dear ${booking.customer.name}, thank you for choosing Anura Tyres. Your appointment has been successfully scheduled. A confirmation email has been sent to ${booking.customer.email}.`;
-      const splitThankYou = doc.splitTextToSize(thankYouText, pageWidth - 2 * margin);
-      doc.text(splitThankYou, margin, yPosition);
-      yPosition += splitThankYou.length * 5 + 10;
+      pdf.setFillColor(255, 215, 0);
+      pdf.rect(0, 0, pageWidth, 40, 'F');
+      if (logoData) { try { pdf.addImage(logoData, 'PNG', 15, 8, 25, 25); } catch {} }
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(28); pdf.setFont('helvetica', 'bold');
+      pdf.text('ANURA TYRES', pageWidth / 2, 18, { align: 'center' });
+      pdf.setFontSize(10); pdf.setFont('helvetica', 'normal');
+      pdf.text('(Pvt) Ltd', pageWidth / 2, 24, { align: 'center' });
+      pdf.setFontSize(9); pdf.setTextColor(51, 51, 51);
+      pdf.text('278/2 High Level Rd, Pannipitiya | Tel: 077 578 5785', pageWidth / 2, 32, { align: 'center' });
+      pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.5);
+      pdf.line(margin, 42, pageWidth - margin, 42);
+      y = 55;
+      pdf.setFontSize(20); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(255, 215, 0);
+      pdf.text('BOOKING CONFIRMED', pageWidth / 2, y, { align: 'center' }); y += 10;
+      pdf.setFontSize(12); pdf.setFont('courier', 'bold'); pdf.setTextColor(0, 0, 0);
+      pdf.text(`Booking ID: ${bookingId}`, pageWidth / 2, y, { align: 'center' }); y += 10;
+      pdf.setFontSize(10); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(0, 0, 0);
+      const thankYou = `Dear ${booking.customer.name}, thank you for choosing Anura Tyres. Your appointment has been successfully scheduled. A confirmation email has been sent to ${booking.customer.email}.`;
+      const split = pdf.splitTextToSize(thankYou, pageWidth - 2 * margin);
+      pdf.text(split, margin, y); y += split.length * 5 + 10;
 
       const sectionHeader = (title: string) => {
-        doc.setFillColor(255, 250, 205);
-        doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(title, margin + 3, yPosition + 5);
-        yPosition += 12;
+        pdf.setFillColor(255, 250, 205); pdf.rect(margin, y, pageWidth - 2 * margin, 8, 'F');
+        pdf.setFontSize(12); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(0, 0, 0);
+        pdf.text(title, margin + 3, y + 5); y += 12;
       };
-
       const infoRows = (rows: { label: string; value: string }[]) => {
-        doc.setFontSize(9);
+        pdf.setFontSize(9);
         rows.forEach((row, i) => {
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(102, 102, 102);
-          doc.text(row.label, margin + 5, yPosition);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(0, 0, 0);
-          const lines = doc.splitTextToSize(row.value, pageWidth - margin - 55);
-          doc.text(lines, margin + 35, yPosition);
-          yPosition += Math.max(5, lines.length * 5);
-          if (i < rows.length - 1) {
-            doc.setDrawColor(238, 238, 238);
-            doc.setLineWidth(0.1);
-            doc.line(margin + 5, yPosition - 1, pageWidth - margin - 5, yPosition - 1);
-          }
+          pdf.setFont('helvetica', 'bold'); pdf.setTextColor(102, 102, 102);
+          pdf.text(row.label, margin + 5, y);
+          pdf.setFont('helvetica', 'normal'); pdf.setTextColor(0, 0, 0);
+          const lines = pdf.splitTextToSize(row.value, pageWidth - margin - 55);
+          pdf.text(lines, margin + 35, y);
+          y += Math.max(5, lines.length * 5);
+          if (i < rows.length - 1) { pdf.setDrawColor(238, 238, 238); pdf.setLineWidth(0.1); pdf.line(margin + 5, y - 1, pageWidth - margin - 5, y - 1); }
         });
-        yPosition += 10;
+        y += 10;
       };
 
       sectionHeader('BOOKING DETAILS');
@@ -191,7 +249,6 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
         { label: 'Date:',    value: booking.date?.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) || 'N/A' },
         { label: 'Time:',    value: booking.timeSlot || 'N/A' },
       ]);
-
       sectionHeader('CUSTOMER INFORMATION');
       infoRows([
         { label: 'Name:',    value: booking.customer.name },
@@ -199,98 +256,57 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
         { label: 'Phone:',   value: booking.customer.phone },
         { label: 'Vehicle:', value: booking.customer.vehicleNo || 'N/A' },
       ]);
-
       sectionHeader('SERVICES BOOKED');
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      booking.services.forEach(service => {
-        doc.text(`• ${service.name}`, margin + 5, yPosition);
-        yPosition += 6;
-      });
-      yPosition += 8;
+      pdf.setFontSize(10); pdf.setFont('helvetica', 'normal');
+      booking.services.forEach(s => { pdf.text(`• ${s.name}`, margin + 5, y); y += 6; });
+      y += 8;
 
       if (discountInfo) {
-        doc.setFillColor(255, 215, 0);
-        doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text('DISCOUNT APPLIED', margin + 3, yPosition + 5);
-        yPosition += 12;
-
-        doc.setFillColor(255, 250, 205);
-        doc.setDrawColor(255, 215, 0);
-        doc.setLineWidth(1);
-        doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 35, 2, 2, 'FD');
-        yPosition += 8;
-
-        doc.setFillColor(255, 215, 0);
-        doc.circle(margin + 20, yPosition + 8, 10, 'F');
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(`${discountInfo.discount}%`, margin + 20, yPosition + 7, { align: 'center' });
-        doc.setFontSize(7);
-        doc.text('OFF', margin + 20, yPosition + 12, { align: 'center' });
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(discountInfo.type === 'corporate' ? 'Corporate Discount' : 'Employee Discount', margin + 35, yPosition + 6);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(51, 51, 51);
+        pdf.setFillColor(255, 215, 0); pdf.rect(margin, y, pageWidth - 2 * margin, 8, 'F');
+        pdf.setFontSize(12); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(0, 0, 0);
+        pdf.text('DISCOUNT APPLIED', margin + 3, y + 5); y += 12;
+        pdf.setFillColor(255, 250, 205); pdf.setDrawColor(255, 215, 0); pdf.setLineWidth(1);
+        pdf.roundedRect(margin, y, pageWidth - 2 * margin, 35, 2, 2, 'FD'); y += 8;
+        pdf.setFillColor(255, 215, 0); pdf.circle(margin + 20, y + 8, 10, 'F');
+        pdf.setFontSize(12); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(0, 0, 0);
+        pdf.text(`${discountInfo.discount}%`, margin + 20, y + 7, { align: 'center' });
+        pdf.setFontSize(7); pdf.text('OFF', margin + 20, y + 12, { align: 'center' });
+        pdf.setFontSize(10); pdf.setFont('helvetica', 'bold');
+        pdf.text(discountInfo.type === 'corporate' ? 'Corporate Discount' : 'Employee Discount', margin + 35, y + 6);
+        pdf.setFontSize(8); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(51, 51, 51);
         if (discountInfo.type === 'corporate') {
-          doc.text(`Company: ${discountInfo.companyName}`, margin + 35, yPosition + 12);
-          doc.text(`Corporate Code: ${discountCode}`, margin + 35, yPosition + 17);
+          pdf.text(`Company: ${discountInfo.companyName}`, margin + 35, y + 12);
+          pdf.text(`Corporate Code: ${discountCode}`, margin + 35, y + 17);
         } else {
-          doc.text(`Employee: ${discountInfo.employeeName}`, margin + 35, yPosition + 12);
-          doc.text(`Company: ${discountInfo.companyName}`, margin + 35, yPosition + 17);
-          doc.text(`Employee ID: ${discountCode}`, margin + 35, yPosition + 22);
+          pdf.text(`Employee: ${discountInfo.employeeName}`, margin + 35, y + 12);
+          pdf.text(`Company: ${discountInfo.companyName}`, margin + 35, y + 17);
+          pdf.text(`Employee ID: ${discountCode}`, margin + 35, y + 22);
         }
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 100, 0);
-        doc.text(`${discountInfo.discount}% discount will be applied at the branch`, pageWidth / 2, yPosition + 28, { align: 'center' });
-        yPosition += 45;
+        pdf.setFontSize(9); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(0, 100, 0);
+        pdf.text(`${discountInfo.discount}% discount will be applied at the branch`, pageWidth / 2, y + 28, { align: 'center' });
+        y += 45;
       }
 
-      doc.setDrawColor(255, 215, 0);
-      doc.setLineWidth(0.3);
-      doc.setFillColor(255, 255, 240);
-      doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 30, 2, 2, 'FD');
-      yPosition += 7;
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(102, 102, 102);
-      doc.text('Important Notes:', margin + 5, yPosition);
-      yPosition += 6;
-      doc.setFont('helvetica', 'normal');
-      ['• Please arrive 10 minutes before your scheduled time.', '• Bring this confirmation along with a valid ID.', '• For any changes or cancellations, please contact us at least 24 hours in advance.'].forEach(note => {
-        doc.text(note, margin + 5, yPosition);
-        yPosition += 5;
+      pdf.setDrawColor(255, 215, 0); pdf.setLineWidth(0.3); pdf.setFillColor(255, 255, 240);
+      pdf.roundedRect(margin, y, pageWidth - 2 * margin, 30, 2, 2, 'FD'); y += 7;
+      pdf.setFontSize(9); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(102, 102, 102);
+      pdf.text('Important Notes:', margin + 5, y); y += 6;
+      pdf.setFont('helvetica', 'normal');
+      ['• Please arrive 10 minutes before your scheduled time.',
+       '• Bring this confirmation along with a valid ID.',
+       '• For changes or cancellations, contact us at least 24 hours in advance.'].forEach(n => {
+        pdf.text(n, margin + 5, y); y += 5;
       });
-      yPosition += 10;
-
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(0, 0, 0);
-      doc.text('We look forward to serving you!', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 6;
-      doc.setFont('helvetica', 'bold');
-      doc.text('ANURA TYRES (Pvt) Ltd', pageWidth / 2, yPosition, { align: 'center' });
-
+      y += 10;
+      pdf.setFontSize(11); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(0, 0, 0);
+      pdf.text('We look forward to serving you!', pageWidth / 2, y, { align: 'center' }); y += 6;
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('ANURA TYRES (Pvt) Ltd', pageWidth / 2, y, { align: 'center' });
       const footerY = pageHeight - 15;
-      doc.setDrawColor(255, 215, 0);
-      doc.setLineWidth(0.3);
-      doc.line(margin, footerY, pageWidth - margin, footerY);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(102, 102, 102);
-      doc.text('Your Trusted Tyre Specialists | www.anuratyres.lk | info@anuratyres.lk', pageWidth / 2, footerY + 5, { align: 'center' });
-
-      doc.save(`Anura_Tyres_Booking_${bookingId || 'Confirmation'}.pdf`);
-
+      pdf.setDrawColor(255, 215, 0); pdf.setLineWidth(0.3); pdf.line(margin, footerY, pageWidth - margin, footerY);
+      pdf.setFontSize(8); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(102, 102, 102);
+      pdf.text('Your Trusted Tyre Specialists | www.anuratyres.lk | info@anuratyres.lk', pageWidth / 2, footerY + 5, { align: 'center' });
+      pdf.save(`Anura_Tyres_Booking_${bookingId}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -309,12 +325,33 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
 
       <h2 className="text-3xl font-bold text-white mb-4">Booking Confirmed!</h2>
 
-      {bookingId && (
-        <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-brand-yellow/10 border border-brand-yellow/20 rounded-lg">
-          <Hash className="w-4 h-4 text-brand-yellow" />
-          <span className="text-brand-yellow font-mono font-bold">{bookingId}</span>
-        </div>
-      )}
+      {/* Always shown — ID is always generated */}
+      <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-brand-yellow/10 border border-brand-yellow/20 rounded-lg">
+        <Hash className="w-4 h-4 text-brand-yellow" />
+        <span className="text-brand-yellow font-mono font-bold">{bookingId}</span>
+      </div>
+
+      {/* Email status */}
+      <div className="flex justify-center mb-4">
+        {emailStatus === 'sending' && (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-400">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            Sending confirmation email…
+          </div>
+        )}
+        {emailStatus === 'sent' && (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg text-xs text-green-400">
+            <Mail className="w-3.5 h-3.5" />
+            Confirmation email sent to <strong className="ml-1 font-mono">{booking.customer.email}</strong>
+          </div>
+        )}
+        {emailStatus === 'error' && (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400">
+            <Mail className="w-3.5 h-3.5" />
+            Email could not be sent — please contact us directly.
+          </div>
+        )}
+      </div>
 
       {savedToDashboard && (
         <div className="mb-6 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-400">
@@ -390,16 +427,14 @@ export function BookingConfirmation({ booking, bookingId }: BookingConfirmationP
       )}
 
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Link to="/">
-          <Button variant="outline" className="w-full sm:w-auto">Back to Home</Button>
-        </Link>
+        <Link to="/"><Button variant="outline" className="w-full sm:w-auto">Back to Home</Button></Link>
         {savedToDashboard && (
-          <Link to="/dashboard">
-            <Button variant="outline" className="w-full sm:w-auto">View in Dashboard</Button>
-          </Link>
+          <Link to="/dashboard"><Button variant="outline" className="w-full sm:w-auto">View in Dashboard</Button></Link>
         )}
         <Button onClick={generatePDF} disabled={generating} className="w-full sm:w-auto flex items-center justify-center gap-2">
-          {generating ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating PDF...</> : <><Download className="w-4 h-4" /> Download PDF</>}
+          {generating
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating PDF...</>
+            : <><Download className="w-4 h-4" /> Download PDF</>}
         </Button>
       </div>
     </div>
