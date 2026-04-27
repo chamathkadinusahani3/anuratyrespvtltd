@@ -44,7 +44,7 @@ export type BookingState = {
 export const BRANCHES: Branch[] = [
 {
   id: 'pannipitiya',
-  name: 'Anura Tyres (Pvt) Ltd Pannipitiya',
+  name: 'Anura Tyres Pvt Ltd Pannipitiya',
   location: 'Pannipitiya',
   address: '278/2 High Level Rd, Pannipitiya ',
   phone: '077 578 5785',
@@ -53,7 +53,7 @@ export const BRANCHES: Branch[] = [
 },
 {
   id: 'RATNAPURA ',
-  name: 'Anura Tyres (Pvt) Ltd Ratnapura',
+  name: 'Anura Tyres Pvt Ltd Ratnapura',
   location: 'RATNAPURA ',
   address: '151 Colombo Rd, Ratnapura ',
   phone: ' 076 688 5885',

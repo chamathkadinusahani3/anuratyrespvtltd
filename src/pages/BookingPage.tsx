@@ -11,10 +11,13 @@ import { DatePicker } from '../components/booking/DatePicker';
 import { TimeSlotPicker } from '../components/booking/TimeSlotPicker';
 import { CustomerForm } from '../components/booking/CustomerForm';
 import { BookingConfirmation } from '../components/booking/BookingConfirmation';
-import { bookingAPI } from '../services/api';
 import book from '../assets/book.png';
 import { BookingState, BookingStep } from '../types';
 import { useActivityTracker } from '../hooks/useActivityTracker';
+
+// ─── bookingAPI import intentionally removed ──────────────────────────────────
+// The POST to /api/bookings is handled entirely inside BookingConfirmation.
+// Having it here AND there was causing every booking to be saved twice.
 
 export function BookingPage() {
   const { track } = useActivityTracker({ type: 'page_view', page: '/booking' });
@@ -38,7 +41,23 @@ export function BookingPage() {
 
   const handleNext = async () => {
     setError(null);
-    if (currentStep === 'details') { await handleSubmitBooking(); return; }
+    if (currentStep === 'details') {
+      // ── Just move to confirmation — BookingConfirmation handles the POST ──
+      setIsSubmitting(true);
+      try {
+        setCurrentStep('confirmation');
+        track({
+          type:   'booking_completed',
+          page:   '/booking',
+          branch: booking.branch?.name ?? undefined,
+          item:   booking.services.map(s => s.name).join(', '),
+        });
+        window.scrollTo(0, 0);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
     switch (currentStep) {
       case 'branch':   setCurrentStep('category'); break;
       case 'category': setCurrentStep('service');  break;
@@ -47,37 +66,6 @@ export function BookingPage() {
       case 'time':     setCurrentStep('details');  break;
     }
     window.scrollTo(0, 0);
-  };
-
-  const handleSubmitBooking = async () => {
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      const response = await bookingAPI.createBooking(booking);
-      if (response.success) {
-        // bookingId is now generated inside BookingConfirmation — no need to
-        // capture the backend ID here anymore.
-        setCurrentStep('confirmation');
-        track({
-          type: 'booking_completed',
-          page: '/booking',
-          branch: booking.branch?.name ?? undefined,
-          item: booking.services.map(s => s.name).join(', '),
-        });
-        window.scrollTo(0, 0);
-      } else {
-        setError(response.message || 'Failed to create booking');
-      }
-    } catch (err: any) {
-      console.error('Booking submission error:', err);
-      if (err.status === 409 || err.message?.includes('fully booked') || err.message?.includes('no longer available')) {
-        setError('Sorry, this time slot was just booked by someone else. Please go back and select a different time.');
-      } else {
-        setError(err.message || 'Failed to submit booking. Please try again.');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const handleBack = () => {

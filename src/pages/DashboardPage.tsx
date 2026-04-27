@@ -130,51 +130,53 @@ function VehiclesTab({ uid }: { uid: string }) {
   // Prevent the localStorage import running more than once per mount
   const importAttempted = React.useRef(false);
 
-  useEffect(() => {
-    const col = collection(db, 'users', uid, 'vehicles');
-    const q   = query(col, orderBy('createdAt', 'asc'));
+ // Replace the existing useEffect in VehiclesTab
+useEffect(() => {
+  const col = collection(db, 'users', uid, 'vehicles');
+  // Remove orderBy — createdAt may be null briefly due to serverTimestamp()
+  // which causes Firestore to exclude the doc from ordered queries mid-write
+  const q = query(col);
 
-    const unsub = onSnapshot(q, async snap => {
+  const unsub = onSnapshot(q, 
+    async snap => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Vehicle));
+      // Sort client-side to avoid the serverTimestamp pending-write race
       setVehicles(docs);
       setLoading(false);
 
-      // ── One-time import from registration localStorage ──────────────────────
-      // Only runs when the user has NO vehicles in Firestore yet AND the
-      // registration profile stored a plate in localStorage.
       if (docs.length === 0 && !importAttempted.current) {
         importAttempted.current = true;
         try {
           const raw = localStorage.getItem(`at_profile_${uid}`);
           if (raw) {
             const profile = JSON.parse(raw) as { vehiclePlate?: string };
-            const plate   = (profile.vehiclePlate ?? '').trim().toUpperCase();
+            const plate = (profile.vehiclePlate ?? '').trim().toUpperCase();
             if (plate) {
               await addDoc(col, {
                 plate,
-                make:                     '',
-                model:                    '',
-                year:                     '',
-                tyreSize:                 '',
-                insuranceExpiry:          '',
-                revenueExpiry:            '',
+                make: '', model: '', year: '',
+                tyreSize: '', insuranceExpiry: '', revenueExpiry: '',
                 importedFromRegistration: true,
-                createdAt:                serverTimestamp(),
+                createdAt: serverTimestamp(),
               });
-              // Clear the plate so it isn't re-imported if the user deletes
-              // the vehicle and the collection becomes empty again.
               profile.vehiclePlate = '';
               localStorage.setItem(`at_profile_${uid}`, JSON.stringify(profile));
             }
           }
         } catch (err) {
-          console.warn('Vehicle auto-import failed (non-critical):', err);
+          console.warn('Vehicle auto-import failed:', err);
         }
       }
-    });
+    },
+    (error) => {
+      // Surface Firestore permission errors so you can see them
+      console.error('Firestore vehicles snapshot error:', error.code, error.message);
+      setLoading(false);
+    }
+  );
 
-    return () => unsub();
-  }, [uid]);
+  return () => unsub();
+}, [uid]);
 
   const openAdd  = () => {
     setForm({});
