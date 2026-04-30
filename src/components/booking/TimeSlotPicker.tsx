@@ -309,7 +309,7 @@ export function TimeSlotPicker({
         </div>
       )}
 
-      {/* Slot grid */}
+      {/* Slot grid   */}
       {!loading && slots.length > 0 && (
         <div className="space-y-6">
           {periods.map(({ label, range }) => {
