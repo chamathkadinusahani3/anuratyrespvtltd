@@ -106,7 +106,7 @@ export function BookingConfirmation({ booking }: BookingConfirmationProps) {
             }
           }
 
-          // ── 3. Send confirmation email ──────────────────────────────
+          // ── 3. Send confirmation email ────────────────────────
           if (booking.customer.email) {
             setEmailStatus('sending');
             try {
