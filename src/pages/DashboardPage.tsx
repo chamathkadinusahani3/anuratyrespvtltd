@@ -10,11 +10,11 @@ import {
 import {
   Car, Calendar, Package, Plus, Edit2, Trash2,
   Clock, CheckCircle, AlertCircle, Download, User,
-  Shield, X, Loader2,
+  Shield, X, Loader2, Truck, Bus, Bike,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// ─── SL Plate helpers (shared with RegisterPage) ─────────────────────────────
+// ─── SL Plate helpers ─────────────────────────────────────────────────────────
 const SL_PLATE_PATTERNS: RegExp[] = [
   /^[A-Z]{2,3}\s[A-Z]{3}-\d{4}$/,
   /^[A-Z]{2,3}\s[A-Z]{2}-\d{4}$/,
@@ -58,10 +58,37 @@ const PLATE_FORMATS = [
   { label: 'Sri Series',      example: '15 ශ්\u200dරී 1234' },
 ];
 
+// ─── Vehicle Types ────────────────────────────────────────────────────────────
+type TyreFormat = 'standard' | 'commercial';
+
+interface VehicleType {
+  value: string;
+  label: string;
+  emoji: string;
+  format: TyreFormat;
+}
+
+const VEHICLE_TYPES: VehicleType[] = [
+  { value: 'car',        label: 'Car',        emoji: '🚗', format: 'standard'   },
+  { value: 'suv',        label: 'SUV',        emoji: '🚙', format: 'standard'   },
+  { value: 'van',        label: 'Van',        emoji: '🚐', format: 'commercial' },
+  { value: 'pickup',     label: 'Pickup',     emoji: '🛻', format: 'standard' },
+  { value: 'bus',        label: 'Bus',        emoji: '🚌', format: 'standard' },
+  { value: 'lorry',      label: 'Lorry',      emoji: '🚚', format: 'standard' },
+  { value: 'motorcycle', label: 'Motorcycle', emoji: '🏍️', format: 'standard'   },
+  { value: 'three_wheel',label: 'Three Wheel',emoji: '🛺', format: 'standard'   },
+];
+
+// ─── Tyre Data ────────────────────────────────────────────────────────────────
+const TYRE_WIDTHS    = ['125','135','145','155','165','175','185','195','205','215','225','235','245','255','265','275','285','295','305'];
+const TYRE_PROFILES  = ['30','35','40','45','50','55','60','65','70','75','80'];
+const TYRE_DIAMETERS = ['12','13','14','15','16','17','18','19','20','21','22'];
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Vehicle {
   id: string;
   plate: string;
+  vehicleType: string;
   make: string;
   model: string;
   year: string;
@@ -88,6 +115,19 @@ interface Order {
   total: number;
   status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
   fulfilment: string;
+}
+
+// ─── Form Errors ──────────────────────────────────────────────────────────────
+interface FormErrors {
+  plate?: string;
+  vehicleType?: string;
+  make?: string;
+  model?: string;
+  year?: string;
+  tyreSize?: string;
+  insuranceExpiry?: string;
+  revenueExpiry?: string;
+  general?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -118,99 +158,208 @@ function ExpiryBadge({ date, label }: { date: string; label: string }) {
   );
 }
 
+// ─── Field Error Message ──────────────────────────────────────────────────────
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
+      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+      {message}
+    </p>
+  );
+}
+
 // ─── Vehicles Tab ─────────────────────────────────────────────────────────────
 function VehiclesTab({ uid }: { uid: string }) {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [saving, setSaving]     = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId]     = useState<string | null>(null);
-  const [form, setForm]         = useState<Partial<Vehicle>>({});
+  const [vehicles, setVehicles]   = useState<Vehicle[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [saving, setSaving]       = useState(false);
+  const [showForm, setShowForm]   = useState(false);
+  const [editId, setEditId]       = useState<string | null>(null);
+  const [form, setForm]           = useState<Partial<Vehicle>>({});
+  const [errors, setErrors]       = useState<FormErrors>({});
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Prevent the localStorage import running more than once per mount
   const importAttempted = React.useRef(false);
 
- // Replace the existing useEffect in VehiclesTab
-useEffect(() => {
-  const col = collection(db, 'users', uid, 'vehicles');
-  // Remove orderBy — createdAt may be null briefly due to serverTimestamp()
-  // which causes Firestore to exclude the doc from ordered queries mid-write
-  const q = query(col);
+  const [tyreParts, setTyreParts] = useState({ width: '', profile: '', diameter: '' });
 
-  const unsub = onSnapshot(q, 
-    async snap => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Vehicle));
-      // Sort client-side to avoid the serverTimestamp pending-write race
-      setVehicles(docs);
-      setLoading(false);
+  // Derived: is the selected vehicle type commercial?
+  const selectedVehicleType = VEHICLE_TYPES.find(v => v.value === form.vehicleType);
+  const isCommercial = selectedVehicleType?.format === 'commercial';
 
-      if (docs.length === 0 && !importAttempted.current) {
-        importAttempted.current = true;
-        try {
-          const raw = localStorage.getItem(`at_profile_${uid}`);
-          if (raw) {
-            const profile = JSON.parse(raw) as { vehiclePlate?: string };
-            const plate = (profile.vehiclePlate ?? '').trim().toUpperCase();
-            if (plate) {
-              await addDoc(col, {
-                plate,
-                make: '', model: '', year: '',
-                tyreSize: '', insuranceExpiry: '', revenueExpiry: '',
-                importedFromRegistration: true,
-                createdAt: serverTimestamp(),
-              });
-              profile.vehiclePlate = '';
-              localStorage.setItem(`at_profile_${uid}`, JSON.stringify(profile));
+  useEffect(() => {
+    const col = collection(db, 'users', uid, 'vehicles');
+    const q   = query(col);
+    const unsub = onSnapshot(q,
+      async snap => {
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Vehicle));
+        setVehicles(docs);
+        setLoading(false);
+
+        if (docs.length === 0 && !importAttempted.current) {
+          importAttempted.current = true;
+          try {
+            const raw = localStorage.getItem(`at_profile_${uid}`);
+            if (raw) {
+              const profile = JSON.parse(raw) as { vehiclePlate?: string };
+              const plate = (profile.vehiclePlate ?? '').trim().toUpperCase();
+              if (plate) {
+                await addDoc(col, {
+                  plate,
+                  vehicleType: '',
+                  make: '', model: '', year: '',
+                  tyreSize: '', insuranceExpiry: '', revenueExpiry: '',
+                  importedFromRegistration: true,
+                  createdAt: serverTimestamp(),
+                });
+                profile.vehiclePlate = '';
+                localStorage.setItem(`at_profile_${uid}`, JSON.stringify(profile));
+              }
             }
+          } catch (err) {
+            console.warn('Vehicle auto-import failed:', err);
           }
-        } catch (err) {
-          console.warn('Vehicle auto-import failed:', err);
         }
+      },
+      (error) => {
+        console.error('Firestore vehicles snapshot error:', error.code, error.message);
+        setLoading(false);
+        setErrors({ general: 'Failed to load vehicles. Please refresh the page.' });
       }
-    },
-    (error) => {
-      // Surface Firestore permission errors so you can see them
-      console.error('Firestore vehicles snapshot error:', error.code, error.message);
-      setLoading(false);
+    );
+    return () => unsub();
+  }, [uid]);
+
+  // Reset tyre parts when vehicle type changes (standard ↔ commercial)
+  useEffect(() => {
+    setTyreParts({ width: '', profile: '', diameter: '' });
+    setForm(f => ({ ...f, tyreSize: '' }));
+  }, [form.vehicleType]);
+
+  const parseTyreSize = (size: string, commercial: boolean) => {
+    if (commercial) {
+      const match = (size ?? '').match(/^(\d{3})R(\d{2})$/);
+      return match
+        ? { width: match[1], profile: '', diameter: match[2] }
+        : { width: '', profile: '', diameter: '' };
     }
-  );
+    const match = (size ?? '').match(/^(\d{3})\/(\d{2,3})R(\d{2})$/);
+    return match
+      ? { width: match[1], profile: match[2], diameter: match[3] }
+      : { width: '', profile: '', diameter: '' };
+  };
 
-  return () => unsub();
-}, [uid]);
-
-  const openAdd  = () => {
+  const openAdd = () => {
     setForm({});
     setEditId(null);
-    setTyreParts({ width: '', profile: '', diameter: '' }); // reset dropdowns
+    setTyreParts({ width: '', profile: '', diameter: '' });
+    setErrors({});
+    setSaveSuccess(false);
     setShowForm(true);
   };
+
   const openEdit = (v: Vehicle) => {
+    const vType  = VEHICLE_TYPES.find(t => t.value === v.vehicleType);
+    const isComm = vType?.format === 'commercial';
     setForm(v);
     setEditId(v.id);
-    setTyreParts(parseTyreSize(v.tyreSize ?? '')); // pre-populate dropdowns
+    setTyreParts(parseTyreSize(v.tyreSize ?? '', isComm));
+    setErrors({});
+    setSaveSuccess(false);
     setShowForm(true);
   };
 
   const deleteVehicle = async (id: string) => {
     if (!confirm('Delete this vehicle?')) return;
-    await deleteDoc(doc(db, 'users', uid, 'vehicles', id));
+    try {
+      await deleteDoc(doc(db, 'users', uid, 'vehicles', id));
+    } catch {
+      setErrors({ general: 'Failed to delete vehicle. Please try again.' });
+    }
   };
 
+  // ── Validation ───────────────────────────────────────────────────────────────
+  // ─── Validation — all fields required ────────────────────────────────────────
+const validate = (): FormErrors => {
+  const e: FormErrors = {};
+
+  // Plate
+  if (!form.plate?.trim()) {
+    e.plate = 'Vehicle plate is required.';
+  } else if (!validateSLPlate(form.plate)) {
+    e.plate = 'Invalid Sri Lankan plate format. E.g. WP CBA-1234 or 19-1234';
+  }
+
+  // Vehicle type
+  if (!form.vehicleType) {
+    e.vehicleType = 'Please select a vehicle type.';
+  }
+
+  // Make
+  if (!form.make?.trim()) {
+    e.make = 'Make is required. E.g. TOYOTA';
+  }
+
+  // Model
+  if (!form.model?.trim()) {
+    e.model = 'Model is required. E.g. AQUA';
+  }
+
+  // Year
+  if (!form.year?.trim()) {
+    e.year = 'Year is required.';
+  } else {
+    const y = parseInt(form.year, 10);
+    const currentYear = new Date().getFullYear();
+    if (isNaN(y) || y < 1950 || y > currentYear + 1) {
+      e.year = `Year must be between 1950 and ${currentYear + 1}.`;
+    }
+  }
+
+  // Insurance expiry
+  if (!form.insuranceExpiry) {
+    e.insuranceExpiry = 'Insurance expiry date is required.';
+  }
+
+  // Revenue expiry
+  if (!form.revenueExpiry) {
+    e.revenueExpiry = 'Revenue expiry date is required.';
+  }
+
+  // Tyre size — required, and must be fully selected
+  if (!form.tyreSize) {
+    e.tyreSize = isCommercial
+      ? 'Tyre size is required. Select Width and Rim diameter.'
+      : 'Tyre size is required. Select Width, Profile, and Rim diameter.';
+  }
+
+  return e;
+};
+
+
   const saveVehicle = async () => {
-    if (!form.plate) return;
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setSaving(true);
-    // Normalize all text fields to uppercase before writing to Firestore
+    setErrors({});
+
     const normalized = {
       ...form,
-      plate:    (form.plate    ?? '').trim().toUpperCase(),
-      make:     (form.make     ?? '').trim().toUpperCase(),
-      model:    (form.model    ?? '').trim().toUpperCase(),
-      tyreSize: (form.tyreSize ?? '').trim().toUpperCase(),
-      year:     (form.year     ?? '').trim(), // numeric — no case change
+      plate:       (form.plate       ?? '').trim().toUpperCase(),
+      vehicleType: (form.vehicleType ?? '').trim(),
+      make:        (form.make        ?? '').trim().toUpperCase(),
+      model:       (form.model       ?? '').trim().toUpperCase(),
+      tyreSize:    (form.tyreSize    ?? '').trim().toUpperCase(),
+      year:        (form.year        ?? '').trim(),
     };
+
     try {
       if (editId) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id, ...data } = normalized as Vehicle;
         await updateDoc(doc(db, 'users', uid, 'vehicles', editId), {
           ...data,
@@ -223,63 +372,67 @@ useEffect(() => {
           createdAt: serverTimestamp(),
         });
       }
-      setShowForm(false);
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setShowForm(false);
+        setSaveSuccess(false);
+      }, 800);
+    } catch (err: any) {
+      setErrors({ general: err?.message ?? 'Failed to save vehicle. Please try again.' });
     } finally {
       setSaving(false);
     }
   };
 
-  // ── Tyre size data ───────────────────────────────────────────────────────────
-  const TYRE_WIDTHS    = ['175','185','195','205','215','225','235','245','255','265','275','285','295','305'];
-  const TYRE_PROFILES  = ['30','35','40','45','50','55','60','65','70','75','80'];
-  const TYRE_DIAMETERS = ['13','14','15','16','17','18','19','20','21','22'];
-
-  // Each part lives in its own state so selecting one never clears the others
-  const [tyreParts, setTyreParts] = useState({ width: '', profile: '', diameter: '' });
-
-  // Parse "185/65R15" back into parts — used when opening edit form
-  const parseTyreSize = (size: string) => {
-    const match = (size ?? '').match(/^(\d{3})\/(\d{2,3})R(\d{2})$/);
-    return match
-      ? { width: match[1], profile: match[2], diameter: match[3] }
-      : { width: '', profile: '', diameter: '' };
-  };
-
   const handleTyreChange = (part: 'width' | 'profile' | 'diameter', value: string) => {
     setTyreParts(prev => {
       const next = { ...prev, [part]: value };
-      // Build combined string only when all three parts are selected
-      const built = next.width && next.profile && next.diameter
-        ? `${next.width}/${next.profile}R${next.diameter}`
-        : '';
+      const built = isCommercial
+        ? (next.width && next.diameter ? `${next.width}R${next.diameter}` : '')
+        : (next.width && next.profile && next.diameter ? `${next.width}/${next.profile}R${next.diameter}` : '');
       setForm(f => ({ ...f, tyreSize: built }));
+      // Clear tyre error once user starts selecting
+      if (value) setErrors(e => ({ ...e, tyreSize: undefined }));
       return next;
     });
   };
 
-  // Shared select style
-  const selectCls = "w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-brand-yellow transition-all appearance-none cursor-pointer";
-
-  const SIMPLE_FIELDS = [
-    { key: 'make',            label: 'Make',             placeholder: 'TOYOTA' },
-    { key: 'model',           label: 'Model',            placeholder: 'AQUA' },
-    { key: 'year',            label: 'Year',             placeholder: '2020' },
-    { key: 'insuranceExpiry', label: 'Insurance Expiry', placeholder: '', type: 'date' },
-    { key: 'revenueExpiry',   label: 'Revenue Expiry',   placeholder: '', type: 'date' },
-  ];
-
-  // Plate change handler — same smart formatter as RegisterPage
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     if (/ශ/.test(raw)) { setForm(prev => ({ ...prev, plate: raw })); return; }
     const { formatted } = formatPlate(raw);
     setForm(prev => ({ ...prev, plate: formatted }));
+    setErrors(prev => ({ ...prev, plate: undefined }));
   };
+
+  const selectCls = (hasError?: boolean) =>
+    `w-full bg-neutral-900 border rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-brand-yellow transition-all appearance-none cursor-pointer ${
+      hasError ? 'border-red-500/60' : 'border-white/10'
+    }`;
+
+ // ─── Field labels — add * to all ─────────────────────────────────────────────
+const SIMPLE_FIELDS: { key: keyof Vehicle; label: string; placeholder: string; type?: string }[] = [
+  { key: 'make',            label: 'Make *',             placeholder: 'TOYOTA' },
+  { key: 'model',           label: 'Model *',            placeholder: 'AQUA' },
+  { key: 'year',            label: 'Year *',             placeholder: '2020' },
+  { key: 'insuranceExpiry', label: 'Insurance Expiry *', placeholder: '', type: 'date' },
+  { key: 'revenueExpiry',   label: 'Revenue Expiry *',   placeholder: '', type: 'date' },
+];
 
   if (loading) return <LoadingSpinner />;
 
   return (
+    
     <div className="space-y-4">
+      <div className="flex justify-between items-center mb-1">
+  <h4 className="font-bold text-white">{editId ? 'Edit Vehicle' : 'Add New Vehicle'}</h4>
+  <button onClick={() => setShowForm(false)} className="text-neutral-400 hover:text-white">
+    <X className="w-4 h-4" />
+  </button>
+</div>
+<p className="text-[11px] text-neutral-600 mb-4">
+  All fields marked <span className="text-red-400">*</span> are required.
+</p>
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-bold text-white">My Vehicles</h3>
         <button
@@ -289,6 +442,21 @@ useEffect(() => {
           <Plus className="w-4 h-4" /> Add Vehicle
         </button>
       </div>
+
+      {/* Global error banner */}
+      {errors.general && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm"
+        >
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{errors.general}</span>
+          <button onClick={() => setErrors(e => ({ ...e, general: undefined }))} className="ml-auto">
+            <X className="w-4 h-4" />
+          </button>
+        </motion.div>
+      )}
 
       {/* Add / Edit form */}
       <AnimatePresence>
@@ -305,12 +473,13 @@ useEffect(() => {
                 <X className="w-4 h-4" />
               </button>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-              {/* ── Vehicle Plate — smart SL formatter ── */}
+              {/* ── Vehicle Plate ── */}
               <div className="sm:col-span-2">
                 <label className="block text-xs text-neutral-400 mb-1.5 font-medium uppercase tracking-wider">
-                  Vehicle Plate
+                  Vehicle Plate <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-600" />
@@ -323,11 +492,13 @@ useEffect(() => {
                     maxLength={formatPlate(form.plate ?? '').maxLength}
                     autoComplete="off"
                     className={`w-full bg-neutral-900 border rounded-lg pl-10 pr-10 py-2.5 text-white text-sm font-mono placeholder-neutral-700 focus:outline-none transition-all
-                      ${form.plate
-                        ? validateSLPlate(form.plate)
-                          ? 'border-green-500/50 focus:border-green-400'
-                          : 'border-red-500/50 focus:border-red-400'
-                        : 'border-white/10 focus:border-brand-yellow'
+                      ${errors.plate
+                        ? 'border-red-500/60 focus:border-red-400'
+                        : form.plate
+                          ? validateSLPlate(form.plate)
+                            ? 'border-green-500/50 focus:border-green-400'
+                            : 'border-red-500/50 focus:border-red-400'
+                          : 'border-white/10 focus:border-brand-yellow'
                       }`}
                     style={{ textTransform: /ශ/.test(form.plate ?? '') ? 'none' : 'uppercase' }}
                   />
@@ -340,122 +511,173 @@ useEffect(() => {
                     </div>
                   )}
                 </div>
-                {/* Format quick-pick buttons */}
-                <div className="grid grid-cols-4 gap-1 mt-2">
+                {/* Format quick-pick */}
+                <div className="mt-2.5 grid grid-cols-2 gap-1">
                   {PLATE_FORMATS.map(fmt => (
-                    <button
+                    <div
                       key={fmt.example}
-                      type="button"
-                      onClick={() => setForm(prev => ({ ...prev, plate: fmt.example }))}
-                      className={`text-left px-2 py-1.5 rounded-lg border transition-all group
-                        ${form.plate === fmt.example
-                          ? 'border-brand-yellow/60 bg-brand-yellow/5'
-                          : 'border-white/8 hover:border-white/20 bg-white/[0.02]'}`}
+                      className="text-left px-2.5 py-1.5 rounded-lg border border-white/8 bg-white/[0.02]"
                     >
-                      <span className="block text-[9px] text-neutral-600 group-hover:text-neutral-500 uppercase tracking-wider mb-0.5">{fmt.label}</span>
-                      <span className="block text-[10px] font-mono text-neutral-400 group-hover:text-neutral-300">{fmt.example}</span>
+                      <span className="block text-[9px] text-neutral-600 uppercase tracking-wider mb-0.5">{fmt.label}</span>
+                      <span className="block text-[11px] font-mono text-neutral-500">{fmt.example}</span>
+                    </div>
+                  ))}
+                </div>
+                <FieldError message={errors.plate} />
+              </div>
+
+              {/* ── Vehicle Type ── */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs text-neutral-400 mb-1.5 font-medium uppercase tracking-wider">
+                  Vehicle Type <span className="text-red-400">*</span>
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {VEHICLE_TYPES.map(v => (
+                    <button
+                      key={v.value}
+                      type="button"
+                      onClick={() => {
+                        setForm(f => ({ ...f, vehicleType: v.value, tyreSize: '' }));
+                        setErrors(e => ({ ...e, vehicleType: undefined, tyreSize: undefined }));
+                      }}
+                      className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border text-xs font-medium transition-all
+                        ${form.vehicleType === v.value
+                          ? 'bg-brand-yellow/10 border-brand-yellow text-brand-yellow'
+                          : errors.vehicleType
+                            ? 'bg-neutral-900 border-red-500/40 text-neutral-500 hover:border-neutral-600'
+                            : 'bg-neutral-900 border-white/8 text-neutral-500 hover:border-neutral-600 hover:text-neutral-300'
+                        }`}
+                    >
+                      <span className="text-lg leading-none">{v.emoji}</span>
+                      <span className="text-[10px]">{v.label}</span>
                     </button>
                   ))}
                 </div>
-                {form.plate && !validateSLPlate(form.plate) && (
-                  <p className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> Invalid Sri Lankan plate format
-                  </p>
-                )}
+                <FieldError message={errors.vehicleType} />
               </div>
 
-              {/* Standard text / date fields */}
+              {/* ── Tyre Size — appears only after vehicle type is selected ── */}
+              <AnimatePresence>
+                {form.vehicleType && (
+                  <motion.div
+                    className="sm:col-span-2"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <label className="block text-xs text-neutral-400 mb-1.5 font-medium uppercase tracking-wider">
+                      Tyre Size <span className="text-red-400">*</span>   {/* ← add this */}
+                      {form.tyreSize && (
+                        <span className="ml-2 font-mono text-brand-yellow normal-case tracking-normal">
+                          {form.tyreSize}
+                        </span>
+                      )}
+                      {selectedVehicleType && (
+                        <span className="ml-2 text-neutral-600 normal-case tracking-normal font-normal">
+                          ({isCommercial ? 'Commercial format' : 'Standard format'})
+                        </span>
+                      )}
+                    </label>
+
+                    <div className={`grid gap-2 ${isCommercial ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                      {/* Width */}
+                      <div className="relative">
+                        <select
+                          value={tyreParts.width}
+                          onChange={e => handleTyreChange('width', e.target.value)}
+                          className={selectCls(!!errors.tyreSize && !tyreParts.width)}
+                        >
+                          <option value="">Width</option>
+                          {TYRE_WIDTHS.map(w => <option key={w} value={w}>{w}</option>)}
+                        </select>
+                        <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+                          <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Profile — standard only */}
+                      {!isCommercial && (
+                        <div className="relative">
+                          <select
+                            value={tyreParts.profile}
+                            onChange={e => handleTyreChange('profile', e.target.value)}
+                            className={selectCls(!!errors.tyreSize && !tyreParts.profile)}
+                          >
+                            <option value="">Profile</option>
+                            {TYRE_PROFILES.map(p => <option key={p} value={p}>{p}</option>)}
+                          </select>
+                          <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+                            <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Diameter */}
+                      <div className="relative">
+                        <select
+                          value={tyreParts.diameter}
+                          onChange={e => handleTyreChange('diameter', e.target.value)}
+                          className={selectCls(!!errors.tyreSize && !tyreParts.diameter)}
+                        >
+                          <option value="">Rim (R)</option>
+                          {TYRE_DIAMETERS.map(d => <option key={d} value={d}>R{d}</option>)}
+                        </select>
+                        <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+                          <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Format hint */}
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className="text-[10px] text-neutral-600">Format:</span>
+                      <span className="text-[10px] font-mono text-neutral-500">
+                        {isCommercial ? 'WIDTH R DIAMETER' : 'WIDTH / PROFILE R DIAMETER'}
+                      </span>
+                      <span className="text-[10px] text-neutral-700 ml-auto">
+                        {isCommercial ? 'e.g. 195R14' : 'e.g. 185/65R15'}
+                      </span>
+                    </div>
+                    <FieldError message={errors.tyreSize} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* ── Standard text / date fields ── */}
               {SIMPLE_FIELDS.map(f => (
                 <div key={f.key}>
-                  <label className="block text-xs text-neutral-400 mb-1.5 font-medium uppercase tracking-wider">{f.label}</label>
+                  <label className="block text-xs text-neutral-400 mb-1.5 font-medium uppercase tracking-wider">
+                    {f.label}
+                  </label>
                   <input
                     type={f.type || 'text'}
                     value={(form as any)[f.key] || ''}
-                    onChange={e => setForm({
-                      ...form,
-                      [f.key]: f.type === 'date' ? e.target.value : e.target.value.toUpperCase(),
-                    })}
+                    onChange={e => {
+                      setForm({
+                        ...form,
+                        [f.key]: f.type === 'date' ? e.target.value : e.target.value.toUpperCase(),
+                      });
+                      setErrors(prev => ({ ...prev, [f.key]: undefined }));
+                    }}
                     placeholder={f.placeholder}
                     style={f.type !== 'date' ? { textTransform: 'uppercase' } : undefined}
-                    className="w-full bg-neutral-900 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-brand-yellow transition-all"
+                    className={`w-full bg-neutral-900 border rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-brand-yellow transition-all ${
+                      (errors as any)[f.key] ? 'border-red-500/60' : 'border-white/10'
+                    }`}
                   />
+                  <FieldError message={(errors as any)[f.key]} />
                 </div>
               ))}
-
-              {/* ── Tyre Size — 3-part cascading dropdowns ── */}
-              <div className="sm:col-span-2">
-                <label className="block text-xs text-neutral-400 mb-1.5 font-medium uppercase tracking-wider">
-                  Tyre Size
-                  {form.tyreSize && (
-                    <span className="ml-2 font-mono text-brand-yellow normal-case tracking-normal">
-                      {form.tyreSize}
-                    </span>
-                  )}
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {/* Width */}
-                  <div className="relative">
-                    <select
-                      value={tyreParts.width}
-                      onChange={e => handleTyreChange('width', e.target.value)}
-                      className={selectCls}
-                    >
-                      <option value="">Width</option>
-                      {TYRE_WIDTHS.map(w => (
-                        <option key={w} value={w}>{w}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
-                      <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                  {/* Profile */}
-                  <div className="relative">
-                    <select
-                      value={tyreParts.profile}
-                      onChange={e => handleTyreChange('profile', e.target.value)}
-                      className={selectCls}
-                    >
-                      <option value="">Profile</option>
-                      {TYRE_PROFILES.map(p => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
-                      <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                  {/* Diameter */}
-                  <div className="relative">
-                    <select
-                      value={tyreParts.diameter}
-                      onChange={e => handleTyreChange('diameter', e.target.value)}
-                      className={selectCls}
-                    >
-                      <option value="">Rim (R)</option>
-                      {TYRE_DIAMETERS.map(d => (
-                        <option key={d} value={d}>R{d}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
-                      <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                {/* Format hint row */}
-                <div className="flex items-center gap-1.5 mt-1.5">
-                  <span className="text-[10px] text-neutral-600">Format:</span>
-                  <span className="text-[10px] font-mono text-neutral-500">WIDTH / PROFILE R DIAMETER</span>
-                  <span className="text-[10px] text-neutral-700 ml-auto">e.g. 185/65R15</span>
-                </div>
-              </div>
             </div>
+
+            {/* Save / Cancel */}
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => setShowForm(false)}
@@ -465,13 +687,25 @@ useEffect(() => {
               </button>
               <button
                 onClick={saveVehicle}
-                disabled={saving || !form.plate}
-                className="flex-1 py-2.5 bg-brand-yellow text-black font-bold rounded-lg hover:bg-yellow-300 text-sm disabled:opacity-60 flex items-center justify-center gap-2"
+                disabled={saving}
+                className={`flex-1 py-2.5 font-bold rounded-lg text-sm flex items-center justify-center gap-2 transition-all ${
+                  saveSuccess
+                    ? 'bg-green-500 text-white'
+                    : 'bg-brand-yellow text-black hover:bg-yellow-300 disabled:opacity-60'
+                }`}
               >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {saving ? 'Saving…' : 'Save Vehicle'}
+                {saving      ? <Loader2     className="w-4 h-4 animate-spin" /> : null}
+                {saveSuccess ? <CheckCircle className="w-4 h-4" />             : null}
+                {saving ? 'Saving…' : saveSuccess ? 'Saved!' : 'Save Vehicle'}
               </button>
             </div>
+
+            {/* Inline form-level error */}
+            {errors.general && (
+              <p className="mt-3 text-xs text-red-400 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5" /> {errors.general}
+              </p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -487,64 +721,71 @@ useEffect(() => {
         </div>
       ) : (
         <div className="space-y-3">
-          {vehicles.map(v => (
-            <motion.div
-              key={v.id}
-              layout
-              className="bg-neutral-800/60 border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-brand-yellow/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Car className="w-6 h-6 text-brand-yellow" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-black text-white text-lg">{v.plate}</h4>
-                      {v.tyreSize && (
-                        <span className="text-xs font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded text-neutral-400">
-                          {v.tyreSize}
-                        </span>
-                      )}
-                      {/* Nudge badge shown on auto-imported vehicles with no details yet */}
-                      {v.importedFromRegistration && !v.make && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow font-medium">
-                          Add details ✏️
-                        </span>
+          {vehicles.map(v => {
+            const vType = VEHICLE_TYPES.find(t => t.value === v.vehicleType);
+            return (
+              <motion.div
+                key={v.id}
+                layout
+                className="bg-neutral-800/60 border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-brand-yellow/10 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
+                      {vType ? vType.emoji : <Car className="w-6 h-6 text-brand-yellow" />}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-black text-white text-lg">{v.plate}</h4>
+                        {vType && (
+                          <span className="text-[10px] text-neutral-500 bg-white/5 border border-white/10 px-2 py-0.5 rounded">
+                            {vType.label}
+                          </span>
+                        )}
+                        {v.tyreSize && (
+                          <span className="text-xs font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded text-neutral-400">
+                            {v.tyreSize}
+                          </span>
+                        )}
+                        {v.importedFromRegistration && !v.make && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow font-medium">
+                            Add details ✏️
+                          </span>
+                        )}
+                      </div>
+                      {v.make || v.model || v.year ? (
+                        <p className="text-neutral-400 text-sm">{[v.year, v.make, v.model].filter(Boolean).join(' ')}</p>
+                      ) : (
+                        <p className="text-neutral-600 text-sm italic">No details yet — click edit to fill in</p>
                       )}
                     </div>
-                    {v.make || v.model || v.year ? (
-                      <p className="text-neutral-400 text-sm">{[v.year, v.make, v.model].filter(Boolean).join(' ')}</p>
-                    ) : (
-                      <p className="text-neutral-600 text-sm italic">No details yet — click edit to fill in</p>
-                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEdit(v)}
+                      className="p-2 rounded-lg hover:bg-white/10 text-neutral-500 hover:text-white transition-all"
+                      title="Edit vehicle"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteVehicle(v.id)}
+                      className="p-2 rounded-lg hover:bg-red-500/10 text-neutral-500 hover:text-red-400 transition-all"
+                      title="Delete vehicle"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openEdit(v)}
-                    className="p-2 rounded-lg hover:bg-white/10 text-neutral-500 hover:text-white transition-all"
-                    title="Edit vehicle"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => deleteVehicle(v.id)}
-                    className="p-2 rounded-lg hover:bg-red-500/10 text-neutral-500 hover:text-red-400 transition-all"
-                    title="Delete vehicle"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              {(v.insuranceExpiry || v.revenueExpiry) && (
-                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/5">
-                  {v.insuranceExpiry && <ExpiryBadge date={v.insuranceExpiry} label="Insurance" />}
-                  {v.revenueExpiry   && <ExpiryBadge date={v.revenueExpiry}   label="Revenue"   />}
-                </div>
-              )}
-            </motion.div>
-          ))}
+                {(v.insuranceExpiry || v.revenueExpiry) && (
+                  <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/5">
+                    {v.insuranceExpiry && <ExpiryBadge date={v.insuranceExpiry} label="Insurance" />}
+                    {v.revenueExpiry   && <ExpiryBadge date={v.revenueExpiry}   label="Revenue"   />}
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -556,14 +797,21 @@ function AppointmentsTab({ uid }: { uid: string }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter]   = useState<'all' | 'upcoming' | 'completed'>('all');
+  const [error, setError]     = useState<string | null>(null);
 
   useEffect(() => {
     const col = collection(db, 'users', uid, 'appointments');
     const q   = query(col, orderBy('date', 'desc'));
-    const unsub = onSnapshot(q, snap => {
-      setAppointments(snap.docs.map(d => ({ id: d.id, ...d.data() } as Appointment)));
-      setLoading(false);
-    });
+    const unsub = onSnapshot(q,
+      snap => {
+        setAppointments(snap.docs.map(d => ({ id: d.id, ...d.data() } as Appointment)));
+        setLoading(false);
+      },
+      err => {
+        setError('Failed to load appointments. Please refresh.');
+        setLoading(false);
+      }
+    );
     return () => unsub();
   }, [uid]);
 
@@ -591,6 +839,12 @@ function AppointmentsTab({ uid }: { uid: string }) {
           ))}
         </div>
       </div>
+      {error && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {error}
+        </div>
+      )}
       {filtered.length === 0 ? (
         <div className="text-center py-16 border border-dashed border-white/10 rounded-xl">
           <Calendar className="w-12 h-12 text-neutral-600 mx-auto mb-3" />
@@ -639,16 +893,23 @@ function AppointmentsTab({ uid }: { uid: string }) {
 
 // ─── Orders Tab ───────────────────────────────────────────────────────────────
 function OrdersTab({ uid }: { uid: string }) {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders]   = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
 
   useEffect(() => {
     const col = collection(db, 'users', uid, 'orders');
     const q   = query(col, orderBy('date', 'desc'));
-    const unsub = onSnapshot(q, snap => {
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
-      setLoading(false);
-    });
+    const unsub = onSnapshot(q,
+      snap => {
+        setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
+        setLoading(false);
+      },
+      err => {
+        setError('Failed to load orders. Please refresh.');
+        setLoading(false);
+      }
+    );
     return () => unsub();
   }, [uid]);
 
@@ -664,6 +925,12 @@ function OrdersTab({ uid }: { uid: string }) {
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-bold text-white">Order History</h3>
+      {error && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {error}
+        </div>
+      )}
       {orders.length === 0 ? (
         <div className="text-center py-16 border border-dashed border-white/10 rounded-xl">
           <Package className="w-12 h-12 text-neutral-600 mx-auto mb-3" />

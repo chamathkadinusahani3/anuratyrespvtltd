@@ -108,7 +108,7 @@ export const SERVICES: ServiceItem[] = [
   // ===============================
   {
     id: 'tyre-sales',
-    name: 'Tyre Sales',
+    name: 'Tyres',
     category: 'Anura Tyres',
     description:
       'Wide range of premium tyres for cars, SUVs, and 4x4 vehicles. We help you choose the perfect tyre for safety, durability, and performance.'

@@ -933,18 +933,16 @@ export function RegisterPage() {
               </div>
               <div className="mt-2.5 grid grid-cols-2 gap-1">
                 {PLATE_FORMATS.map(fmt => (
-                  <button
-                    key={fmt.example}
-                    type="button"
-                    onClick={() => { setForm({ ...form, vehiclePlate: fmt.example }); clearErr('vehiclePlate'); }}
-                    className={`text-left px-2.5 py-1.5 rounded-lg border transition-all group
-                      ${form.vehiclePlate === fmt.example
-                        ? 'border-brand-yellow/60 bg-brand-yellow/5'
-                        : 'border-white/8 hover:border-white/20 bg-white/[0.02]'}`}
+                  <div
+               
+               
+               
+                  key={fmt.example}
+                    className="text-left px-2.5 py-1.5 rounded-lg border border-white/8 bg-white/[0.02]"
                   >
-                    <span className="block text-[9px] text-neutral-600 group-hover:text-neutral-500 uppercase tracking-wider mb-0.5">{fmt.label}</span>
-                    <span className="block text-[11px] font-mono text-neutral-400 group-hover:text-neutral-300">{fmt.example}</span>
-                  </button>
+                    <span className="block text-[9px] text-neutral-600 uppercase tracking-wider mb-0.5">{fmt.label}</span>
+                    <span className="block text-[11px] font-mono text-neutral-500">{fmt.example}</span>
+                  </div>
                 ))}
               </div>
               <FieldError message={fieldErrors.vehiclePlate} />

@@ -10,6 +10,7 @@ import { useActivityTracker } from '../hooks/useActivityTracker';
 import { ExcellenceSection } from '../components/home/ExcellenceSection';
 
 import { Search, Star, ExternalLink, ChevronRight, Mail, CheckCircle } from 'lucide-react';
+import { WheelAlignmentPage } from '../components/home/WheelAlignmentPage';
 
 // ─── Featured products (first 8 tyre products with images) ───────────────────
 const FEATURED_PRODUCTS = [
@@ -91,12 +92,14 @@ function HomeSearchBar() {
         </p>
       </div>
     </section>
+    
   );
 }
 
 // ─── Featured Products ────────────────────────────────────────────────────────
 function FeaturedProducts() {
   return (
+    
     <section className="bg-black py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-end justify-between mb-12">
@@ -187,7 +190,7 @@ function ReviewsSection() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div >
           {REVIEWS.map((review, i) => (
             <div key={i} className="bg-neutral-900 border border-white/8 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 hover:-translate-y-0.5 flex flex-col">
               <div className="flex items-center gap-3 mb-4">
@@ -239,59 +242,117 @@ function NewsletterSection() {
   };
 
   return (
-    <section className="bg-black py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-64 bg-brand-yellow/8 blur-[100px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-red/8 blur-[80px] rounded-full pointer-events-none" />
+    <section className="relative bg-gradient-to-b from-black via-neutral-950 to-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden border-t border-white/5">
+  {/* Background Effects */}
+  <div className="absolute inset-0 pointer-events-none">
+    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-brand-yellow/10 blur-[140px] rounded-full" />
+    <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-brand-red/10 blur-[120px] rounded-full" />
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),transparent_60%)]" />
+  </div>
 
-      <div className="max-w-2xl mx-auto relative z-10 text-center">
-        <div className="w-14 h-14 bg-brand-yellow/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-brand-yellow/20">
-          <Mail className="w-7 h-7 text-brand-yellow" />
+  <div className="relative z-10 max-w-3xl mx-auto">
+
+    <div className="relative bg-white/[0.03] border border-white/10 backdrop-blur-2xl rounded-[32px] overflow-hidden p-8 sm:p-12 shadow-[0_0_60px_rgba(0,0,0,0.45)] text-center">
+
+      {/* Glow Border */}
+      <div className="absolute inset-0 border border-white/5 rounded-[32px] pointer-events-none" />
+
+      {/* Icon */}
+      <div className="relative w-20 h-20 mx-auto mb-8">
+        <div className="absolute inset-0 bg-brand-yellow blur-3xl opacity-30 rounded-full" />
+        <div className="relative w-full h-full rounded-3xl bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center">
+          <Mail className="w-9 h-9 text-brand-yellow" />
         </div>
-        <p className="text-brand-yellow text-xs font-bold tracking-[0.3em] uppercase mb-3">Newsletter</p>
-        <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-2">Sign Up Now to Receive</h2>
-        <p className="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow to-brand-red mb-4">
-          Exclusive Offers &amp; Discounts
-        </p>
-        <p className="text-gray-400 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
-          Be the first to know about seasonal promotions, new tyre arrivals and service reminders.
-        </p>
+      </div>
 
-        {status === 'success' ? (
-          <div className="flex items-center justify-center gap-3 bg-green-500/10 border border-green-500/30 rounded-2xl px-8 py-5">
-            <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
-            <div className="text-left">
-              <p className="text-green-400 font-bold text-sm">You're subscribed!</p>
-              <p className="text-gray-400 text-xs mt-0.5">Watch your inbox for exclusive offers from Anura Tyres.</p>
-            </div>
+      {/* Label */}
+      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow text-xs font-bold tracking-[0.25em] uppercase mb-8">
+        Newsletter
+      </div>
+
+      {/* Title */}
+      <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight mb-4">
+        JOIN OUR
+        <br />
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-yellow-200 to-brand-red">
+          EXCLUSIVE CLUB
+        </span>
+      </h2>
+
+      {/* Description */}
+      <p className="text-gray-400 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-10">
+        Get exclusive tyre deals, vehicle care tips, seasonal promotions,
+        and service reminders delivered directly to your inbox.
+      </p>
+
+      {/* Success State */}
+      {status === 'success' ? (
+        <div className="flex items-center gap-4 bg-green-500/10 border border-green-500/30 rounded-2xl px-6 py-5 text-left">
+          <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+            <CheckCircle className="w-6 h-6 text-green-400" />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Enter your email address"
-              className="flex-1 bg-neutral-900 border border-white/10 focus:border-brand-yellow/50 text-white placeholder-gray-500 rounded-xl px-5 py-3.5 text-sm outline-none transition-colors duration-200"
-            />
+
+          <div>
+            <p className="text-green-400 font-black text-base">
+              Subscription Successful
+            </p>
+            <p className="text-gray-400 text-sm mt-1">
+              Watch your inbox for exclusive offers and updates from Anura Tyres.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Form */}
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto"
+          >
+            <div className="relative flex-1">
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Enter your email address"
+                className="w-full bg-neutral-900/80 border border-white/10 focus:border-brand-yellow/50 text-white placeholder-gray-500 rounded-2xl px-6 py-4 text-sm outline-none transition-all duration-300"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={status === 'loading' || !email.includes('@')}
-              className="bg-brand-yellow hover:bg-white text-black font-bold text-sm px-7 py-3.5 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap"
+              className="group relative overflow-hidden bg-brand-yellow hover:bg-white text-black font-black text-sm px-8 py-4 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_15px_35px_-10px_rgba(255,204,0,0.45)]"
             >
-              {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
+              <span className="relative z-10 flex items-center gap-2 justify-center">
+                {status === 'loading' ? 'Subscribing...' : 'Subscribe Now'}
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+              </span>
             </button>
           </form>
-        )}
 
-        <p className="text-gray-600 text-xs mt-4 leading-relaxed">
-          By signing up, you agree to our{' '}
-          <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors duration-200 underline underline-offset-2">Privacy Notice</Link>
-          {' '}and{' '}
-          <Link to="/terms" className="text-gray-400 hover:text-white transition-colors duration-200 underline underline-offset-2">Terms &amp; Conditions</Link>.
-          {' '}You can unsubscribe at any time.
-        </p>
-      </div>
-    </section>
+          {/* Small Note */}
+          <p className="text-gray-600 text-xs leading-relaxed mt-6 max-w-lg mx-auto">
+            By subscribing, you agree to our{' '}
+            <Link
+              to="/privacy"
+              className="text-gray-400 hover:text-white underline underline-offset-2 transition-colors duration-200"
+            >
+              Privacy Policy
+            </Link>{' '}
+            and{' '}
+            <Link
+              to="/terms"
+              className="text-gray-400 hover:text-white underline underline-offset-2 transition-colors duration-200"
+            >
+              Terms & Conditions
+            </Link>.
+            You can unsubscribe anytime.
+          </p>
+        </>
+      )}
+    </div>
+  </div>
+</section>
   );
 }
 
@@ -305,44 +366,63 @@ export function HomePage() {
       <HeroSection />
       <TyreSearch />
       <BranchPreview />
+      <WheelAlignmentPage/>
       <ExcellenceSection/>
       <ServicesPreview />
       <FeaturedProducts />
       <ReviewsSection />
       <NewsletterSection />
 
+      
+
       {/* CTA */}
-      <section className="py-24 bg-black relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-red/20 blur-[120px] rounded-full" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-yellow/10 blur-[120px] rounded-full" />
+      
+       <section className="py-24 bg-black relative overflow-hidden flex items-center">
+    <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+      <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-red/20 blur-[120px] rounded-full" />
+      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-yellow/10 blur-[120px] rounded-full" />
+    </div>
+
+    <div className="max-w-3xl mx-auto px-6 relative z-10 w-full">
+      <div className="bg-neutral-900/50 border border-white/10 backdrop-blur-md rounded-3xl p-8 md:p-16 text-center h-full flex flex-col justify-center">
+        
+        <div className="w-20 h-1.5 bg-brand-red mx-auto mb-8 rounded-full shadow-[0_0_15px_rgba(255,0,0,0.5)]" />
+
+        <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
+          READY TO <span className="text-brand-yellow">UPGRADE</span> YOUR RIDE?
+        </h2>
+
+        <p className="text-lg text-gray-400 mb-10 leading-relaxed">
+          Book your appointment online in less than 2 minutes.
+          Choose your preferred branch, service, and time.
+        </p>
+
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
+          <Link to="/booking" className="w-full sm:w-auto">
+            <Button
+              size="lg"
+              className="group relative bg-brand-yellow text-black hover:bg-white transition-all duration-300 font-bold px-10 h-14 w-full sm:w-auto rounded-xl overflow-hidden shadow-[0_10px_20px_-10px_rgba(255,215,0,0.3)]"
+            >
+              <span className="relative z-10">Book Appointment Now</span>
+
+              <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            </Button>
+          </Link>
+
+          <Link to="/contact" className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 font-bold px-10 h-14 w-full sm:w-auto rounded-xl"
+            >
+              Contact Us
+            </Button>
+          </Link>
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="bg-neutral-900/50 border border-white/10 backdrop-blur-md rounded-3xl p-8 md:p-16 text-center">
-            <div className="w-20 h-1.5 bg-brand-red mx-auto mb-8 rounded-full shadow-[0_0_15px_rgba(255,0,0,0.5)]" />
-            <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
-              READY TO <span className="text-brand-yellow">UPGRADE</span> YOUR RIDE?
-            </h2>
-            <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Book your appointment online in less than 2 minutes.
-              Choose your preferred branch, service, and time.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-              <Link to="/booking" className="w-full sm:w-auto">
-                <Button size="lg" className="group relative bg-brand-yellow text-black hover:bg-white transition-all duration-300 font-bold px-10 h-14 w-full sm:w-auto rounded-xl overflow-hidden shadow-[0_10px_20px_-10px_rgba(255,215,0,0.3)]">
-                  <span className="relative z-10">Book Appointment Now</span>
-                  <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                </Button>
-              </Link>
-              <Link to="/contact" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 font-bold px-10 h-14 w-full sm:w-auto rounded-xl">
-                  Contact Us
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+
+      </div>
+    </div>
+  </section>
     </Layout>
   );
 }
