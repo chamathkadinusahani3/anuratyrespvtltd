@@ -962,11 +962,21 @@ export function RegisterPage() {
                   {agreed && <span className="text-black text-xs font-black">✓</span>}
                 </div>
                 <span className="text-xs text-neutral-500 leading-relaxed">
-                  I agree to the{' '}
-                  <a href="#" className="text-brand-yellow hover:underline">Terms of Service</a>
-                  {' '}and{' '}
-                  <a href="#" className="text-brand-yellow hover:underline">Privacy Policy</a>
-                </span>
+  I agree to the{' '}
+  <Link
+    to="/terms-of-service"
+    className="text-brand-yellow hover:underline"
+  >
+    Terms of Service
+  </Link>
+  {' '}and{' '}
+  <Link
+    to="/privacy-policy"
+    className="text-brand-yellow hover:underline"
+  >
+    Privacy Policy
+  </Link>
+</span>
               </label>
               <FieldError message={fieldErrors.terms} />
             </div>

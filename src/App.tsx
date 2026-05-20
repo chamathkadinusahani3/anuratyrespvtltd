@@ -14,6 +14,8 @@ import { EmployeeRegistration } from './components/Employeeregistration';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TermsOfServicePage } from './pages/TermsOfServicePage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -40,6 +42,8 @@ export function App() {
             <Route path="/login"              element={<LoginPage />} />
             <Route path="/register"           element={<RegisterPage />} />
             <Route path="/dashboard"          element={<DashboardPage />} />
+            <Route path="/terms-of-service"   element={<TermsOfServicePage />} />
+            <Route path="/privacy-policy"     element={<PrivacyPolicyPage />} />
           </Routes>
         </CartProvider>
       </AuthProvider>
