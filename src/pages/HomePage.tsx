@@ -11,6 +11,7 @@ import { ExcellenceSection } from '../components/home/ExcellenceSection';
 
 import { Search, Star, ExternalLink, ChevronRight, Mail, CheckCircle } from 'lucide-react';
 import { WheelAlignmentPage } from '../components/home/WheelAlignmentPage';
+import { LiveShopSection } from '../components/home/LiveShopSection';
 
 // ─── Featured products (first 8 tyre products with images) ───────────────────
 const FEATURED_PRODUCTS = [
@@ -369,6 +370,7 @@ export function HomePage() {
       <WheelAlignmentPage/>
       <ExcellenceSection/>
       <ServicesPreview />
+      <LiveShopSection />
       <FeaturedProducts />
       <ReviewsSection />
       <NewsletterSection />

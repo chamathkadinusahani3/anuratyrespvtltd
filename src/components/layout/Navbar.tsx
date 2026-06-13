@@ -4,7 +4,6 @@ import { Menu, X, Phone, LogIn, LogOut, User, LayoutDashboard, ShoppingCart } fr
 import { Button } from '../ui/Button';
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
-import { CartDrawer } from '../cart/CartDrawer';
 import logo from "../../assets/logo.png";
 
 export function Navbar() {
@@ -12,7 +11,7 @@ export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { cartCount, setIsOpen: setCartOpen } = useCart();
+  const { cartCount } = useCart();
 
   const navLinks = [
     { name: 'Home',     path: '/' },
@@ -28,7 +27,6 @@ export function Navbar() {
 
   return (
     <>
-      <CartDrawer />
       <nav className="sticky top-0 z-40 w-full bg-brand-black/95 backdrop-blur-sm border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
@@ -59,7 +57,7 @@ export function Navbar() {
               </a>
 
               {/* Cart */}
-              <button onClick={() => setCartOpen(true)} className="relative p-2 text-brand-gray hover:text-white transition-colors" aria-label="Cart">
+              <button onClick={() => navigate('/cart')} className="relative p-2 text-brand-gray hover:text-white transition-colors" aria-label="Cart">
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-brand-yellow text-black text-[10px] font-black rounded-full flex items-center justify-center leading-none">
@@ -101,7 +99,7 @@ export function Navbar() {
 
             {/* Mobile: cart + burger */}
             <div className="md:hidden flex items-center gap-2">
-              <button onClick={() => setCartOpen(true)} className="relative p-2 text-brand-gray hover:text-white">
+              <button onClick={() => navigate('/cart')} className="relative p-2 text-brand-gray hover:text-white">
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand-yellow text-black text-[10px] font-black rounded-full flex items-center justify-center">

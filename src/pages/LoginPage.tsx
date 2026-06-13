@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft, Mail, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -156,6 +156,8 @@ type LoginFieldErrors = { email?: string; password?: string; form?: string };
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as { from?: string } | null)?.from ?? '/dashboard';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -227,7 +229,7 @@ export function LoginPage() {
         return;
       }
 
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch (err: any) {
       setFieldErrors(parseFirebaseError(err.code));
     } finally {
@@ -239,9 +241,9 @@ export function LoginPage() {
     setGoogleLoading(true);
     setFieldErrors({});
     try {
-      // Google accounts are always pre-verified — safe to go straight to dashboard
+      // Google accounts are always pre-verified — safe to redirect
       await signInWithPopup(auth, googleProvider);
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch (err: any) {
       setFieldErrors(parseFirebaseError(err.code));
     } finally {

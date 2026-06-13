@@ -1,272 +1,327 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Search, ExternalLink, Send } from 'lucide-react';
+import { Search, Package, ChevronLeft, ChevronRight, X, SlidersHorizontal, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import type { Product, ProductFilters, ProductMetaResponse } from '../types/inventoryPublic';
+import { DEFAULT_FILTERS } from '../types/inventoryPublic';
+import { productsAPI } from '../services/inventoryPublicApi';
+import { ProductCard } from '../components/shop/ProductCard';
+import { ShopFilters, MobileFilterBar } from '../components/shop/ShopFilters';
+import { ProductGridSkeleton, FiltersSkeleton } from '../components/shop/ProductSkeleton';
+import { ProductDetailModal } from '../components/shop/ProductDetailModal';
 import products from '../assets/products.png';
-import { useActivityTracker } from '../hooks/useActivityTracker';
 
-const PRODUCTS = [
-  { id: 1, brand: "FORZA 001", pattern: "FORZA 001", desc: "Deliver a thrilling ride with maximum precision.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/PassengerCar/banner_product_FORZA_001_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/forza-001/", stock: "In Stock" },
-  { id: 2, brand: "FALCO S88", pattern: "FALCO S88", desc: "Perfect balance of dynamic appearance and sport-oriented performance.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/PassengerCar/banner_product_FALCO_S88_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/falco-s88/", stock: "In Stock" },
-  { id: 3, brand: "V-36", pattern: "V-36", desc: "Feel the greater stability and control.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/PassengerCar/banner_product_V-36_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/v-36/", stock: "In Stock" },
-  { id: 4, brand: "X-68+", pattern: "X-68+", desc: "Enjoy the ultimate handling and grip.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/PassengerCar/banner_product_X-68__img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/x-68-plus/", stock: "In Stock" },
-  { id: 5, brand: "SC-900", pattern: "SC-900", desc: "Quieter, Safer and Smoother Journey.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/PassengerCar/banner_product_SC-900_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/sc-900/", stock: "In Stock" },
-  { id: 6, brand: "SC-901", pattern: "SC-901", desc: "Cost-effective with long endurance.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/PassengerCar/banner_product_SC-901_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/sc-901/", stock: "In Stock" },
-  { id: 7, brand: "ST-51", pattern: "ST-51", desc: "Longevity and performance on the highway.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/PassengerCar/banner_product_ST-51_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/st-51/", stock: "In Stock" },
-  { id: 8, brand: "ST-55", pattern: "ST-55", desc: "Pure street performance.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/PassengerCar/banner_product_ST-55_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/st-55/", stock: "In Stock" },
-  { id: 9, brand: "SW-89", pattern: "SW-89", desc: "High-speed travel on snow and ice.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/PassengerCar/banner_product_SW-89_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/sw-89/", stock: "In Stock" },
-  { id: 10, brand: "KAIJU-2", pattern: "KAIJU-2", desc: "Meet your daily adventures on and off the road.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/LightTruck/banner_product_KAIJU-2_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/kaiju-2/", stock: "In Stock" },
-  { id: 11, brand: "SM-5", pattern: "SM-5", desc: "Balance performance over various terrains.", category: "PASSENGER CAR", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/LightTruck/banner_product_SM-5_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/sm-5/", stock: "In Stock" },
-  { id: 12, brand: "PRESA M/T", pattern: "PRESA M/T", desc: "Experience go-anywhere performance with amazing traction.", category: "LIGHT TRUCK", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/LightTruck/banner_product_PRESA_M_T_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/presa-m-t/", stock: "In Stock" },
-  { id: 13, brand: "FUERTE K99", pattern: "FUERTE K99", desc: "Address the multi-purpose needs of modern commercial vehicles.", category: "LIGHT TRUCK", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/LightTruck/banner_product_FUERTE_K99_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/fuerte-k99/", stock: "In Stock" },
-  { id: 14, brand: "SM-1", pattern: "SM-1", desc: "Gain more mileage through extended periods of wear.", category: "LIGHT TRUCK", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/LightTruck/banner_product_SM-1_img_2x.png?v=202405291424", link: "https://kinto-tyres.lk/product/sm-1/", stock: "In Stock" },
-  { id: 15, brand: "KMX707", pattern: "KMX707", desc: "", category: "TRUCK & BUS", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/TruckBus/banner_product_KMX707_img_2x_1.webp?v=202405291424", link: "https://kinto-tyres.lk/product/kmx707/", stock: "In Stock" },
-  { id: 16, brand: "SLH101", pattern: "SLH101", desc: "", category: "TRUCK & BUS", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/TruckBus/banner_product_SLH101_img_2x.webp?v=202405291424", link: "https://kinto-tyres.lk/product/slh101/", stock: "In Stock" },
-  { id: 17, brand: "SLH100", pattern: "SLH100", desc: "", category: "TRUCK & BUS", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/TruckBus/banner_product_SLH100_img_2x.webp?v=202405291424", link: "https://kinto-tyres.lk/product/slh100/", stock: "In Stock" },
-  { id: 18, brand: "KMX700", pattern: "KMX700", desc: "", category: "TRUCK & BUS", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/TruckBus/banner_product_KMX700_img_2x-1.webp?v=202405291424", link: "https://kinto-tyres.lk/product/kmx700/", stock: "In Stock" },
-  { id: 19, brand: "KMX703", pattern: "KMX703", desc: "", category: "TRUCK & BUS", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/TruckBus/banner_product_KMX703_img_2x_1.webp?v=202405291424", link: "https://kinto-tyres.lk/product/kmx703/", stock: "In Stock" },
-  { id: 20, brand: "KMN606", pattern: "KMN606", desc: "", category: "TRUCK & BUS", image: "https://image.makewebeasy.net/makeweb/m_1920x0/JCbWKd3P2/TruckBus/banner_product_KMN606_img_2x_1.webp?v=202405291424", link: "https://kinto-tyres.lk/product/kmn606/", stock: "In Stock" },
-  { id: 21, brand: "E3L3/E3L3+/E3L3B/E3L3B+/E3L3C", pattern: "E3L3 SERIES", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/E3L3C_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/e3l3-e3l3-plus-e3l3b-e3l3b-plus-e3l3c/#sec67672682a72e5e33f0c9368adzv", stock: "In Stock" },
-  { id: 22, brand: "G2L2", pattern: "G2L2", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/G2L2_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/g2l2/", stock: "In Stock" },
-  { id: 23, brand: "C-1/L5-S", pattern: "C-1/L5-S", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/C-1_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/c-1-l5-s/", stock: "In Stock" },
-  { id: 24, brand: "R3", pattern: "R3", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/R3.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/r3/", stock: "In Stock" },
-  { id: 25, brand: "R4", pattern: "R4", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/R4_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/r4/", stock: "In Stock" },
-  { id: 26, brand: "XF336", pattern: "XF336", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/XF336_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/xf336/", stock: "In Stock" },
-  { id: 27, brand: "SKS-1/SKS-3", pattern: "SKS SERIES", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/SKS-1_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/sks-1-sks-3/", stock: "In Stock" },
-  { id: 28, brand: "R1-W", pattern: "R1-W", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/R1-W_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/r1-w/", stock: "In Stock" },
-  { id: 29, brand: "XF007/XF007A", pattern: "XF007 SERIES", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/XF007_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/xf007-xf007a/", stock: "In Stock" },
-  { id: 30, brand: "XF208", pattern: "XF208", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/XF208_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/xf208/", stock: "In Stock" },
-  { id: 31, brand: "KA-6", pattern: "KA-6", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/KA-6_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/ka-6/", stock: "In Stock" },
-  { id: 32, brand: "R1/R1+/R1-1/R1-2/R1-3/R1-4/R1-5", pattern: "R1 SERIES", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/R1-2_1.png?v=202405291424&x=47&y=0&w=266&h=421", link: "https://kinto-tyres.lk/product/r1r1r1-1r1-2r1-3r1-4r1-5/", stock: "In Stock" },
-  { id: 33, brand: "PR-1", pattern: "PR-1", desc: "", category: "OFF THE ROAD", image: "https://image.makewebeasy.net/makeweb/crop/JCbWKd3P2/OffTheRoad/PR-1_1.png?v=202405291424&x=46&y=15&w=266&h=388", link: "https://kinto-tyres.lk/product/pr-1/", stock: "In Stock" },
-  { id: 201, brand: "TYRE VULCANIZER(240V)", pattern: "", category: "TOOLS", stock: "In Stock" },
-  { id: 202, brand: "Cross Beam Adaptor", pattern: "", category: "TOOLS", stock: "In Stock" },
-  { id: 203, brand: "Wheel Nut 1.25 19-12xMM 1.25", pattern: "1006S-L27 HEX", category: "TOOLS", stock: "In Stock" },
-  { id: 204, brand: "Wheel Nut 1.5 19-12xMM 1.5", pattern: "1007S-L27 HEX", category: "TOOLS", stock: "In Stock" },
-  { id: 205, brand: "ADHESIVE WHEEL WEIGHT 6KG", pattern: "5G 10G*4 FE", category: "TOOLS", stock: "In Stock" },
-  { id: 206, brand: "Air hose reel", pattern: "AHC-34-3", category: "TOOLS", stock: "In Stock" },
-  { id: 207, brand: "Tiltback Tyre Changers (automatic)", pattern: "C233GB NAAR", category: "TOOLS", stock: "In Stock" },
-  { id: 208, brand: "3T Low Profile Garage Jack", pattern: "E1525C", category: "TOOLS", stock: "In Stock" },
-  { id: 209, brand: "2T Rachet Jack Stand with Safety Pin", pattern: "E1902", category: "TOOLS", stock: "In Stock" },
-  { id: 210, brand: "3T Rachet Jack Stands with Safety Pin", pattern: "E1903", category: "TOOLS", stock: "In Stock" },
-  { id: 211, brand: "Baseless 2 Post Lift 4T", pattern: "E2-4.0", category: "TOOLS", stock: "In Stock" },
-  { id: 212, brand: "10 Ton Welded hydraulic Bottle Jack", pattern: "E3110", category: "TOOLS", stock: "In Stock" },
-  { id: 213, brand: "20 Ton Welded Hydraulic Bottle Jack", pattern: "E3120", category: "TOOLS", stock: "In Stock" },
-  { id: 214, brand: "30 Ton Welded Hydraulic Bottle Jack", pattern: "E3130", category: "TOOLS", stock: "In Stock" },
-  { id: 215, brand: "50 Ton Hydraulic Bottle Jack", pattern: "E3150", category: "TOOLS", stock: "In Stock" },
-  { id: 216, brand: "10000PSI Aluminum Air Hydraulic Pump", pattern: "E51020", category: "TOOLS", stock: "In Stock" },
-  { id: 217, brand: "Air Chuck", pattern: "EAC512", category: "TOOLS", stock: "In Stock" },
-  { id: 218, brand: "Tyre Pressure Gauge-Normal", pattern: "ECG-008A", category: "TOOLS", stock: "In Stock" },
-  { id: 219, brand: "Tyre Pressure Gauge-Digital", pattern: "ECG-008B", category: "TOOLS", stock: "In Stock" },
-  { id: 220, brand: "Labour Saving Wrench", pattern: "EW-78A", category: "TOOLS", stock: "In Stock" },
-  { id: 221, brand: "ECCENTRIC CAMBER BOLT", pattern: "M10", category: "TOOLS", stock: "In Stock" },
-  { id: 222, brand: "ECCENTRIC CAMBER BOLT", pattern: "M12", category: "TOOLS", stock: "In Stock" },
-  { id: 223, brand: "ECCENTRIC CAMBER BOLT", pattern: "M13", category: "TOOLS", stock: "In Stock" },
-  { id: 224, brand: "ECCENTRIC CAMBER BOLT", pattern: "M14", category: "TOOLS", stock: "In Stock" },
-  { id: 225, brand: "ECCENTRIC CAMBER BOLT", pattern: "M15", category: "TOOLS", stock: "In Stock" },
-  { id: 226, brand: "ECCENTRIC CAMBER BOLT", pattern: "M16", category: "TOOLS", stock: "In Stock" },
-  { id: 227, brand: "ECCENTRIC CAMBER BOLT", pattern: "M17", category: "TOOLS", stock: "In Stock" },
-  { id: 228, brand: "Tyre Mounting Paste 1kg", pattern: "PRO-3001", category: "TOOLS", stock: "In Stock" },
-  { id: 229, brand: "Tyre Mounting Paste 3kg", pattern: "PRO-3003", category: "TOOLS", stock: "In Stock" },
-  { id: 230, brand: "Tyre Mounting Paste 5kg", pattern: "PRO-3005", category: "TOOLS", stock: "In Stock" },
-  { id: 231, brand: "Ten Socket Kits", pattern: "SOCKET-10", category: "TOOLS", stock: "In Stock" },
-  { id: 232, brand: "Three Sockets Kits", pattern: "SOCKETS-3", category: "TOOLS", stock: "In Stock" },
-  { id: 233, brand: "1TON Spring Compressor", pattern: "TL-10005", category: "TOOLS", stock: "In Stock" },
-  { id: 234, brand: "1000LBS Motorcycle Jack", pattern: "TL-31001", category: "TOOLS", stock: "In Stock" },
-  { id: 235, brand: "20 Ton Hydraulic Shop Press", pattern: "TL-5920", category: "TOOLS", stock: "In Stock" },
-  { id: 236, brand: "Tubless Repair Kit", pattern: "TRK-006", category: "TOOLS", stock: "In Stock" },
-  { id: 237, brand: "Tyre Valve Key", pattern: "VT-011", category: "TOOLS", stock: "In Stock" },
-  { id: 238, brand: "Tyre Valve Puller (Blue)", pattern: "VT-026A", category: "TOOLS", stock: "In Stock" },
-  { id: 239, brand: "Tyre Valve Puller (Green)", pattern: "VT-026B", category: "TOOLS", stock: "In Stock" },
-];
+const PAGE_SIZE = 24;
+
+function Pagination({ page, pages, onPage }: { page: number; pages: number; onPage: (p: number) => void }) {
+  if (pages <= 1) return null;
+  const range: (number | '...')[] = [];
+  for (let i = 1; i <= pages; i++) {
+    if (i === 1 || i === pages || (i >= page - 1 && i <= page + 1)) range.push(i);
+    else if (i === page - 2 || i === page + 2) range.push('...');
+  }
+  const deduped = range.filter((v, i, a) => v !== '...' || a[i - 1] !== '...');
+  return (
+    <div className="flex items-center justify-center gap-2 mt-10">
+      <button onClick={() => onPage(page - 1)} disabled={page <= 1}
+        className="p-2 bg-brand-card border border-white/10 rounded-lg text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      {deduped.map((v, i) =>
+        v === '...' ? (
+          <span key={`e${i}`} className="text-white/30 px-1">…</span>
+        ) : (
+          <button key={v} onClick={() => onPage(v as number)}
+            className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${page === v ? 'bg-brand-yellow text-black font-bold' : 'bg-brand-card border border-white/10 text-white/60 hover:text-white'}`}>
+            {v}
+          </button>
+        )
+      )}
+      <button onClick={() => onPage(page + 1)} disabled={page >= pages}
+        className="p-2 bg-brand-card border border-white/10 rounded-lg text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+function EmptyState({ filters, onClear }: { filters: ProductFilters; onClear: () => void }) {
+  const hasFilters = Object.entries(filters).some(([k, v]) => k !== 'sort' && v !== '');
+  return (
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <Package className="w-16 h-16 text-white/10 mb-4" />
+      <h3 className="text-white font-bold text-xl mb-2">No products found</h3>
+      <p className="text-white/40 text-sm max-w-sm mb-6">
+        {hasFilters
+          ? 'No items match your current filters. Try adjusting your search or clearing filters.'
+          : 'No inventory items are available at the moment. Check back soon!'}
+      </p>
+      {hasFilters && (
+        <button onClick={onClear}
+          className="flex items-center gap-2 px-5 py-2.5 bg-brand-yellow text-black font-bold text-sm rounded-xl hover:bg-brand-yellow/90 transition-colors">
+          <X className="w-4 h-4" />
+          Clear Filters
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20 rounded-full px-3 py-1 text-xs font-medium">
+      {label}
+      <button onClick={onRemove} className="hover:text-white transition-colors">
+        <X className="w-3 h-3" />
+      </button>
+    </span>
+  );
+}
 
 export function ProductsPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('ALL');
-  const { track } = useActivityTracker({ type: 'page_view', page: '/products' });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filters, setFilters] = useState<ProductFilters>(() => ({
+    ...DEFAULT_FILTERS,
+    search: searchParams.get('search') || '',
+  }));
+  const [page, setPage] = useState(1);
+  const [items, setItems] = useState<Product[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingMeta, setLoadingMeta] = useState(true);
+  const [meta, setMeta] = useState<ProductMetaResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [online, setOnline] = useState(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const topRef = useRef<HTMLDivElement>(null);
 
-  const categories = ["ALL", "PASSENGER CAR", "LIGHT TRUCK", "TRUCK & BUS", "OFF THE ROAD", "TOOLS"];
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
 
-  const filteredProducts = PRODUCTS.filter((product) => {
-    const matchesCategory = selectedCategory === 'ALL' || product.category === selectedCategory;
-    const matchesSearch =
-      product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.pattern.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.desc && product.desc.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  });
+  useEffect(() => {
+    productsAPI.meta().then(setMeta).catch(() => {}).finally(() => setLoadingMeta(false));
+  }, []);
 
-  const isToolsView = selectedCategory === 'TOOLS';
-  const displayProducts = isToolsView
-    ? filteredProducts
-    : filteredProducts.filter(p => p.category !== 'TOOLS');
+  const fetchProducts = useCallback((f: ProductFilters, p: number) => {
+    setLoadingProducts(true);
+    setError(null);
+    productsAPI.list({ ...f, page: p, limit: PAGE_SIZE })
+      .then((r) => {
+        setItems(r.products);
+        setTotalPages(r.pagination.pages);
+        setTotalItems(r.pagination.total);
+      })
+      .catch((e: Error) => setError(e.message || 'Failed to load products'))
+      .finally(() => setLoadingProducts(false));
+  }, []);
 
-  // Track search after user pauses typing
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    if (value.trim().length >= 2) {
-      track({ type: 'tyre_search', item: value, page: '/products' });
-    }
-  };
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    const delay = (filters.search || filters.tyreSize) ? 400 : 0;
+    debounceRef.current = setTimeout(() => fetchProducts(filters, page), delay);
+    return () => clearTimeout(debounceRef.current);
+  }, [filters, page, fetchProducts]);
 
-  // Track product inquiry click
-  const handleInquiry = (product: typeof PRODUCTS[0]) => {
-    track({ type: 'inquiry', item: product.brand, detail: product.pattern, page: '/products' });
-  };
+  useEffect(() => {
+    if (page > 1) topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [page]);
 
-  // Track view details click
-  const handleViewDetails = (product: typeof PRODUCTS[0]) => {
-    track({ type: 'product_view', item: product.brand, detail: product.link, page: '/products' });
-    if (product.link) window.open(product.link, '_blank');
-  };
+  function handleFilterChange(partial: Partial<ProductFilters>) {
+    setFilters((f) => ({ ...f, ...partial }));
+    setPage(1);
+  }
+
+  function handleClearFilters() {
+    setFilters(DEFAULT_FILTERS);
+    setPage(1);
+    setSearchParams({});
+  }
+
+  const hasActiveFilters = Object.entries(filters).some(([k, v]) => k !== 'sort' && v !== '');
 
   return (
     <Layout>
       {/* Hero */}
-      <div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div ref={topRef} className="relative bg-black py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: `url(${products})` }} />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
-        <div className="relative max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-7xl font-black mb-6 uppercase tracking-tighter
-            text-transparent bg-clip-text bg-gradient-to-r
-            from-[#FFCC00] from-10%
-            via-[#FFFFFF] via-50%
-            to-[#FF0000] to-90%
-            animate-gradient-move">
-            Premium Tyres & Tools
-          </h1>
-          <p className="text-xl text-brand-gray max-w-3xl mx-auto leading-relaxed">
-            Discover our curated selection from world-leading manufacturers
-          </p>
-        </div>
-      </div>
-
-      <div className="bg-black py-12 px-4 sm:px-6 lg:px-8 min-h-screen">
-        <div className="max-w-7xl mx-auto">
-
-          {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => { setSelectedCategory(cat); setSearchTerm(''); }}
-                className={`px-5 py-2 rounded-full text-sm font-semibold border transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-brand-yellow text-brand-black border-brand-yellow'
-                    : 'border-brand-yellow/50 text-brand-yellow hover:bg-brand-yellow/10'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+        <div className="relative max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-green-400 text-sm font-semibold">Live Inventory</span>
+            {online
+              ? <Wifi className="w-4 h-4 text-green-400/60" />
+              : <WifiOff className="w-4 h-4 text-red-400/60" />
+            }
           </div>
-
-          {/* Search Bar */}
-          <div className="mb-8">
-            <div className="relative max-w-xl mx-auto">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-gray" />
+          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#FFCC00] via-white to-[#FFCC00]">
+            Product Catalogue
+          </h1>
+          <p className="text-white/50 text-lg mt-3 max-w-2xl">
+            Real-time stock from our inventory. Prices and availability update automatically after every sale, import, or adjustment.
+          </p>
+          <div className="mt-6 max-w-xl">
+            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-2xl overflow-hidden focus-within:border-brand-yellow/40 transition-colors">
+              <Search className="w-5 h-5 text-white/30 ml-4 flex-shrink-0" />
               <input
                 type="text"
-                placeholder={`Search ${isToolsView ? 'tools' : 'tyres'} by name or pattern...`}
-                className="w-full bg-brand-card border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-brand-gray focus:outline-none focus:ring-2 focus:ring-brand-yellow/50"
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search by name, SKU, tyre size (e.g. 185/65R15)…"
+                value={filters.search}
+                onChange={(e) => handleFilterChange({ search: e.target.value })}
+                className="flex-1 bg-transparent text-white placeholder-white/30 px-4 py-3.5 text-sm outline-none"
+                style={{ textTransform: 'none' }}
               />
-            </div>
-          </div>
-
-          {/* Tools List View */}
-          {isToolsView && (
-            <div className="space-y-3">
-              {displayProducts.length > 0 ? (
-                displayProducts.map((tool) => (
-                  <Card key={tool.id} className="p-5">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white">{tool.brand}</h3>
-                        {tool.pattern && <p className="text-brand-yellow text-sm mt-1">{tool.pattern}</p>}
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge variant="success" className="text-xs">{tool.stock}</Badge>
-                        <Button
-                          size="sm"
-                          className="bg-brand-yellow text-brand-black hover:bg-brand-yellow/90"
-                          onClick={() => handleInquiry(tool)}
-                        >
-                          <Send className="w-4 h-4 mr-1" />
-                          Request Quote
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))
-              ) : (
-                <div className="text-center py-20">
-                  <p className="text-brand-gray text-lg">No tools found.</p>
-                </div>
+              {filters.search && (
+                <button onClick={() => handleFilterChange({ search: '' })} className="mr-3">
+                  <X className="w-4 h-4 text-white/40 hover:text-white" />
+                </button>
               )}
             </div>
-          )}
-
-          {/* Tyres Grid View */}
-          {!isToolsView && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayProducts.map((product) => (
-                <Card key={product.id} hoverEffect className="flex flex-col overflow-hidden">
-                  <div className="h-60 bg-white/5 flex items-center justify-center p-4">
-                    {product.image ? (
-                      <img src={product.image} alt={product.brand} className="w-full h-full object-contain" />
-                    ) : (
-                      <div className="text-brand-gray text-sm">No Image Available</div>
-                    )}
-                  </div>
-                  <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-3">
-                      <Badge variant="neutral" className="text-xs">{product.category}</Badge>
-                      <Badge variant="success" className="text-xs">{product.stock}</Badge>
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-1">{product.brand}</h3>
-                    <p className="text-brand-yellow font-medium mb-2">{product.pattern}</p>
-                    {product.desc && <p className="text-brand-gray text-sm mb-4 flex-1">{product.desc}</p>}
-                    <div className="flex gap-3 mt-auto pt-4 border-t border-white/5">
-                      {product.link && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => handleViewDetails(product)}
-                        >
-                          <ExternalLink className="w-4 h-4 mr-1" />
-                          View Details
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-brand-yellow text-brand-black hover:bg-brand-yellow/90"
-                        onClick={() => handleInquiry(product)}
-                      >
-                        <Send className="w-4 h-4 mr-1" />
-                        Inquiry
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {displayProducts.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-brand-gray text-lg mb-4">No products found matching your search.</p>
-              <Button variant="ghost" onClick={() => { setSearchTerm(''); setSelectedCategory('ALL'); }}>
-                Clear Filters
-              </Button>
-            </div>
-          )}
+          </div>
         </div>
       </div>
+
+      <div className="bg-brand-black min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+          {/* Active filter chips */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {filters.search && <Chip label={`"${filters.search}"`} onRemove={() => handleFilterChange({ search: '' })} />}
+              {filters.category && <Chip label={filters.category} onRemove={() => handleFilterChange({ category: '' })} />}
+              {filters.brand && <Chip label={filters.brand} onRemove={() => handleFilterChange({ brand: '' })} />}
+              {filters.stockStatus && <Chip label={filters.stockStatus} onRemove={() => handleFilterChange({ stockStatus: '' })} />}
+              {filters.tyreSize && <Chip label={`Size: ${filters.tyreSize}`} onRemove={() => handleFilterChange({ tyreSize: '' })} />}
+              {(filters.minPrice || filters.maxPrice) && (
+                <Chip label={`Rs ${filters.minPrice || '0'} – ${filters.maxPrice || '∞'}`} onRemove={() => handleFilterChange({ minPrice: '', maxPrice: '' })} />
+              )}
+              <button onClick={handleClearFilters} className="text-brand-yellow text-xs hover:underline ml-1">Clear all</button>
+            </div>
+          )}
+
+          <div className="flex gap-7">
+            {/* Sidebar — desktop */}
+            <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-24 self-start">
+              {loadingMeta ? <FiltersSkeleton /> : (
+                <ShopFilters
+                  filters={filters}
+                  meta={meta}
+                  onChange={handleFilterChange}
+                  onClear={handleClearFilters}
+                  totalProducts={totalItems}
+                  isLoading={loadingProducts}
+                />
+              )}
+            </aside>
+
+            {/* Main */}
+            <div className="flex-1 min-w-0">
+              {/* Mobile filter bar */}
+              <div className="lg:hidden mb-4">
+                <MobileFilterBar
+                  filters={filters}
+                  onOpen={() => setShowMobileFilters(true)}
+                  onSortChange={(sort) => handleFilterChange({ sort })}
+                  totalProducts={totalItems}
+                />
+              </div>
+
+              {/* Desktop: count + sort */}
+              <div className="hidden lg:flex items-center justify-between mb-5">
+                <p className="text-white/40 text-sm">
+                  {loadingProducts ? 'Loading…' : `${totalItems} product${totalItems !== 1 ? 's' : ''} found`}
+                </p>
+                <select
+                  value={filters.sort}
+                  onChange={(e) => handleFilterChange({ sort: e.target.value })}
+                  className="bg-brand-card border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-yellow/40 cursor-pointer"
+                >
+                  <option value="-createdAt">New Arrivals</option>
+                  <option value="sellPrice">Price: Low to High</option>
+                  <option value="-sellPrice">Price: High to Low</option>
+                  <option value="name">Name: A–Z</option>
+                  <option value="-name">Name: Z–A</option>
+                </select>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
+                  <span className="text-red-400 text-sm flex-1">{error}</span>
+                  <button onClick={() => fetchProducts(filters, page)}
+                    className="flex items-center gap-1.5 text-brand-yellow text-xs font-medium">
+                    <RefreshCw className="w-3.5 h-3.5" />Retry
+                  </button>
+                </div>
+              )}
+
+              {/* Grid */}
+              {loadingProducts ? (
+                <ProductGridSkeleton count={12} />
+              ) : items.length === 0 ? (
+                <EmptyState filters={filters} onClear={handleClearFilters} />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {items.map((product, i) => (
+                    <ProductCard key={product.id} product={product} onView={setSelectedProduct} index={i} />
+                  ))}
+                </div>
+              )}
+
+              {!loadingProducts && totalPages > 1 && (
+                <Pagination page={page} pages={totalPages} onPage={setPage} />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile filter drawer */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setShowMobileFilters(false)} />
+          <div className="relative ml-auto w-80 max-w-full h-full bg-[#111] overflow-y-auto">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-white/5">
+              <span className="text-white font-semibold flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-brand-yellow" />Filters
+              </span>
+              <button onClick={() => setShowMobileFilters(false)}><X className="w-5 h-5 text-white/60 hover:text-white" /></button>
+            </div>
+            <div className="p-4">
+              {loadingMeta ? <FiltersSkeleton /> : (
+                <ShopFilters
+                  filters={filters}
+                  meta={meta}
+                  onChange={(f) => { handleFilterChange(f); }}
+                  onClear={() => { handleClearFilters(); setShowMobileFilters(false); }}
+                  totalProducts={totalItems}
+                  isLoading={loadingProducts}
+                />
+              )}
+            </div>
+            <div className="sticky bottom-0 p-4 bg-[#111] border-t border-white/5">
+              <button onClick={() => setShowMobileFilters(false)}
+                className="w-full py-3 bg-brand-yellow text-black font-bold rounded-xl text-sm">
+                Show {totalItems} Results
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ProductDetailModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onViewProduct={(p) => setSelectedProduct(p)}
+      />
     </Layout>
   );
 }

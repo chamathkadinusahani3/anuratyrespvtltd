@@ -132,7 +132,7 @@ export function BookingConfirmation({ booking }: BookingConfirmationProps) {
                     ? `${discountInfo.discount}% ${discountInfo.type === 'corporate' ? 'Corporate' : 'Employee'} Discount${discountInfo.companyName ? ` — ${discountInfo.companyName}` : ''}`
                     : '',
                 },
-                EMAILJS_PUBLIC_KEY,
+                { publicKey: EMAILJS_PUBLIC_KEY },
               );
               setEmailStatus('sent');
             } catch (err) {

@@ -1,51 +1,140 @@
+// src/pages/PrivacyPolicyPage.tsx
+
 import React from 'react';
 import { Layout } from '../components/layout/Layout';
 import {
   Shield,
   Database,
-  Lock,
   Eye,
   Cookie,
+  Lock,
   Mail,
-  ChevronRight,
+  Scale,
+  Server,
+  UserCheck,
 } from 'lucide-react';
 
 const PRIVACY_SECTIONS = [
   {
-    title: 'Information We Collect',
-    icon: Database,
-    description:
-      'We may collect personal information such as names, email addresses, phone numbers, addresses, vehicle details, and payment information.',
+    title: 'Who We Are',
+    icon: Shield,
+    content: `
+Data Controller: ANURA TYRES PVT LTD
+
+Website: www.anuratyres.com
+Email: info@anuratyres.com
+Phone: +94 77 578 5785
+
+Registered Address:
+278/2 High Level Rd,
+Pannipitiya,
+Sri Lanka
+    `,
   },
   {
-    title: 'How We Use Data',
+    title: 'Information We Collect',
+    icon: Database,
+    content: `
+We may collect the following personal information:
+
+• Full name
+• Phone number
+• Email address
+• Delivery and billing address
+• Vehicle details
+• Payment records
+• IP address and browser information
+• Messages submitted through forms
+    `,
+  },
+  {
+    title: 'How We Collect Data',
     icon: Eye,
-    description:
-      'Customer data is used to process bookings, provide services, improve website performance, and deliver better customer experiences.',
+    content: `
+We collect data through:
+
+• Website inquiry forms
+• Online bookings
+• Product purchases
+• Cookies and analytics tools
+• Third-party integrations
+• Customer support interactions
+    `,
+  },
+  {
+    title: 'How We Use Your Data',
+    icon: UserCheck,
+    content: `
+Your information may be used to:
+
+• Process orders and bookings
+• Provide customer support
+• Improve our services
+• Send invoices and confirmations
+• Improve website functionality
+• Deliver promotional offers
+• Prevent fraud and misuse
+    `,
   },
   {
     title: 'Cookies & Tracking',
     icon: Cookie,
-    description:
-      'Our website uses cookies, Google Analytics, Facebook Pixel, and Google Ads tracking to improve website functionality and advertising performance.',
+    content: `
+Our website uses:
+
+• Cookies
+• Google Analytics
+• Facebook Pixel
+• Google Ads Conversion Tracking
+
+These technologies help improve user experience, monitor traffic, and measure advertising performance.
+    `,
   },
   {
-    title: 'Data Security',
-    icon: Lock,
-    description:
-      'We implement reasonable security measures to protect customer data from unauthorized access, misuse, or loss.',
+    title: 'Data Sharing',
+    icon: Server,
+    content: `
+We do not sell personal data.
+
+Your information may be shared with trusted third parties including:
+
+• Payment processors
+• Delivery providers
+• Website hosting services
+• Marketing providers
+• Regulatory authorities when legally required
+    `,
   },
   {
     title: 'Marketing Communications',
     icon: Mail,
-    description:
-      'We may send promotional emails and service updates. Customers may unsubscribe from marketing communications at any time.',
+    content: `
+We may send promotional emails and service updates if you consent to receive marketing communications.
+
+You may unsubscribe at any time using the unsubscribe link or by contacting us directly.
+    `,
   },
   {
-    title: 'Privacy Protection',
-    icon: Shield,
-    description:
-      'We are committed to protecting your privacy and handling customer information responsibly and transparently.',
+    title: 'Data Security',
+    icon: Lock,
+    content: `
+We implement appropriate technical and organizational measures to protect customer data from unauthorized access, misuse, loss, or disclosure.
+
+However, no internet transmission can be guaranteed to be completely secure.
+    `,
+  },
+  {
+    title: 'Your Rights',
+    icon: Scale,
+    content: `
+Under the Personal Data Protection Act No. 9 of 2022 of Sri Lanka, you may request to:
+
+• Access your personal data
+• Correct inaccurate information
+• Request deletion of your information
+• Withdraw marketing consent
+• Lodge complaints with relevant authorities
+    `,
   },
 ];
 
@@ -57,22 +146,18 @@ export function PrivacyPolicyPage() {
       <section className="relative overflow-hidden bg-black py-28 px-4 sm:px-6 lg:px-8 border-b border-white/5">
 
         <div className="absolute inset-0">
-
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/80 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/80 to-black" />
 
           <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-brand-yellow/10 blur-[140px] rounded-full" />
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-brand-red/10 blur-[140px] rounded-full" />
-
         </div>
 
         <div className="relative max-w-6xl mx-auto text-center">
 
-          {/* Badge */}
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow text-xs font-bold tracking-[0.25em] uppercase mb-8">
-            Data Protection
+            Privacy & Data Protection
           </div>
 
-          {/* Heading */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[0.95] mb-8">
             <span className="text-white">PRIVACY</span>{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-yellow via-white to-brand-red">
@@ -80,10 +165,8 @@ export function PrivacyPolicyPage() {
             </span>
           </h1>
 
-          {/* Description */}
-          <p className="max-w-3xl mx-auto text-lg md:text-xl text-gray-400 leading-relaxed">
-            Learn how ANURA TYRES PVT LTD collects, uses, and protects your
-            personal information.
+          <p className="max-w-4xl mx-auto text-lg md:text-xl text-gray-400 leading-relaxed">
+            Effective Date: May 27, 2026 | Last Updated: May 27, 2026
           </p>
 
         </div>
@@ -92,72 +175,59 @@ export function PrivacyPolicyPage() {
       {/* CONTENT */}
       <section className="bg-gradient-to-b from-black via-neutral-950 to-black py-24 px-4 sm:px-6 lg:px-8">
 
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto space-y-8">
 
-          {/* Intro */}
-          <div className="mb-16 bg-white/[0.03] border border-white/10 rounded-3xl p-8 backdrop-blur-xl">
+          {PRIVACY_SECTIONS.map((section, index) => {
+            const Icon = section.icon;
 
-            <h2 className="text-3xl font-black text-white mb-6">
-              Your Privacy Matters
-            </h2>
+            return (
+              <div
+                key={index}
+                className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl"
+              >
 
-            <p className="text-gray-400 leading-relaxed text-lg">
-              ANURA TYRES PVT LTD is committed to safeguarding customer
-              information and maintaining transparency about how data is collected,
-              stored, and used.
-            </p>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,204,0,0.08),transparent_60%)]" />
 
-          </div>
+                <div className="relative p-8 md:p-10">
 
-          {/* Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-start gap-5">
 
-            {PRIVACY_SECTIONS.map((section, index) => {
-              const Icon = section.icon;
-
-              return (
-                <div
-                  key={index}
-                  className="group relative overflow-hidden border border-white/10 bg-neutral-900/70 backdrop-blur-xl rounded-3xl hover:border-white/20 transition-all duration-500 hover:-translate-y-1"
-                >
-
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-[radial-gradient(circle_at_top_right,rgba(255,204,0,0.12),transparent_60%)]" />
-
-                  <div className="relative p-8">
-
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-brand-yellow/10 border border-brand-yellow/20 mb-6">
-                      <Icon className="w-7 h-7 text-brand-yellow" />
+                    <div className="w-16 h-16 rounded-2xl bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center shrink-0">
+                      <Icon className="w-8 h-8 text-brand-yellow" />
                     </div>
 
-                    <h3 className="text-2xl font-black text-white mb-4">
-                      {section.title}
-                    </h3>
+                    <div className="flex-1">
 
-                    <p className="text-gray-400 leading-relaxed">
-                      {section.description}
-                    </p>
+                      <h2 className="text-3xl font-black text-white mb-6">
+                        {index + 1}. {section.title}
+                      </h2>
 
+                      <div className="text-gray-400 leading-relaxed whitespace-pre-line text-base md:text-lg">
+                        {section.content}
+                      </div>
+
+                    </div>
 
                   </div>
+
                 </div>
-              );
-            })}
 
-          </div>
+              </div>
+            );
+          })}
 
-          {/* Footer */}
-          <div className="mt-20 bg-white/[0.03] border border-white/10 rounded-3xl p-8 text-center">
+          {/* CONTACT */}
+          <div className="mt-16 rounded-3xl border border-white/10 bg-gradient-to-r from-brand-yellow/10 to-brand-red/10 p-10 text-center">
 
-            <h3 className="text-3xl font-black text-white mb-4">
+            <h2 className="text-4xl font-black text-white mb-5">
               Contact Us
-            </h3>
+            </h2>
 
-            <p className="text-gray-400 leading-relaxed mb-6">
-              If you have any questions regarding this Privacy Policy or your data,
-              please contact us.
+            <p className="text-gray-300 text-lg mb-6">
+              For privacy-related questions or requests, contact:
             </p>
 
-            <div className="space-y-2 text-gray-300">
+            <div className="space-y-2 text-white">
               <p>ANURA TYRES PVT LTD</p>
               <p>info@anuratyres.com</p>
               <p>+94 77 578 5785</p>

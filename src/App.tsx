@@ -16,6 +16,9 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
+import { DamageApprovalPage } from './pages/DamageApprovalPage';
+import { CartPage } from './pages/CartPage';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -31,7 +34,7 @@ export function App() {
           <ScrollToTop />
           <Routes>
             <Route path="/"                   element={<HomePage />} />
-            <Route path="/booking"            element={<BookingPage />} />
+            <Route path="/booking"            element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
             <Route path="/services"           element={<ServicesPage />} />
             <Route path="/branches"           element={<BranchesPage />} />
             <Route path="/about"              element={<AboutPage />} />
@@ -44,6 +47,8 @@ export function App() {
             <Route path="/dashboard"          element={<DashboardPage />} />
             <Route path="/terms-of-service"   element={<TermsOfServicePage />} />
             <Route path="/privacy-policy"     element={<PrivacyPolicyPage />} />
+            <Route path="/cart"                  element={<CartPage />} />
+            <Route path="/approve/:inspectionId" element={<DamageApprovalPage />} />
           </Routes>
         </CartProvider>
       </AuthProvider>
