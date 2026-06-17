@@ -77,7 +77,7 @@ export function DamageApprovalPage() {
   const [decision,   setDecision]   = useState<Decision | null>(null);
   const [showPhotos, setShowPhotos] = useState(false);
   const [showNotes,  setShowNotes]  = useState(false);
-  const [lightbox,   setLightbox]   = useState<string | null>(null);
+  const [lightbox,   setLightbox]   = useState<{ src: string; type: 'image' | 'video' } | null>(null);
 
   // Fetch inspection on mount
   useEffect(() => {
@@ -137,7 +137,7 @@ export function DamageApprovalPage() {
   // ── Derived ─────────────────────────────────────────────────────────────────
   const job      = inspection?.jobSummary;
   const damages  = inspection?.damageReports || [];
-  const media    = (inspection?.mediaFiles || []).filter(m => m.type === 'image' && (m.data || m.url));
+  const media    = (inspection?.mediaFiles || []).filter(m => (m.type === 'image' || m.type === 'video') && (m.data || m.url));
   const notes    = inspection?.techNotes || '';
   const quoteItems = inspection?.quotationItems || [];
   const origCost = job?.originalCost || 0;
@@ -333,7 +333,7 @@ export function DamageApprovalPage() {
           </div>
         )}
 
-        {/* ── Evidence Photos ─────────────────────────────────────────────── */}
+        {/* ── Evidence Photos & Videos ─────────────────────────────────────── */}
         {hasMedia && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <button
@@ -345,7 +345,9 @@ export function DamageApprovalPage() {
                   <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" />
                   <polyline points="21 15 16 10 5 21" />
                 </svg>
-                <p className="text-white font-bold text-sm">Evidence Photos ({media.length})</p>
+                <p className="text-white font-bold text-sm">
+                  Evidence Media ({media.length})
+                </p>
               </div>
               {showPhotos
                 ? <ChevronUp className="w-4 h-4 text-neutral-400" />
@@ -357,18 +359,39 @@ export function DamageApprovalPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {media.map(m => {
                     const src = m.data || m.url || '';
+                    const isVideo = m.type === 'video';
                     return (
                       <div
                         key={m.id}
-                        className="aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition-transform"
-                        onClick={() => setLightbox(src)}
+                        className="aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition-transform relative"
+                        onClick={() => setLightbox({ src, type: m.type })}
                       >
-                        <img src={src} alt={m.name} className="w-full h-full object-cover" />
+                        {isVideo ? (
+                          <>
+                            <video
+                              src={src}
+                              className="w-full h-full object-cover"
+                              muted
+                              playsInline
+                              preload="metadata"
+                            />
+                            {/* Play overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <div className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center shadow-md">
+                                <svg className="w-4 h-4 text-gray-900 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <img src={src} alt={m.name} className="w-full h-full object-cover" />
+                        )}
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-[11px] text-gray-400 text-center mt-2">Tap a photo to view full size</p>
+                <p className="text-[11px] text-gray-400 text-center mt-2">Tap to view full size</p>
               </div>
             )}
           </div>
@@ -499,7 +522,16 @@ export function DamageApprovalPage() {
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
           onClick={() => setLightbox(null)}
         >
-          <img src={lightbox} alt="Evidence" className="max-w-full max-h-[90vh] rounded-xl object-contain" />
+          {lightbox.type === 'video' ? (
+            <video
+              src={lightbox.src}
+              className="max-w-full max-h-[90vh] rounded-xl"
+              controls
+              onClick={e => e.stopPropagation()}
+            />
+          ) : (
+            <img src={lightbox.src} alt="Evidence" className="max-w-full max-h-[90vh] rounded-xl object-contain" />
+          )}
           <button
             className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 rounded-full p-2"
             onClick={() => setLightbox(null)}

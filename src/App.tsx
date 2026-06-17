@@ -19,6 +19,7 @@ import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { DamageApprovalPage } from './pages/DamageApprovalPage';
 import { CartPage } from './pages/CartPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ChatWidget } from './components/ChatWidget';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -32,6 +33,7 @@ export function App() {
       <AuthProvider>
         <CartProvider>
           <ScrollToTop />
+          <ChatWidget />
           <Routes>
             <Route path="/"                   element={<HomePage />} />
             <Route path="/booking"            element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
