@@ -3,6 +3,7 @@ import { Layout } from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
+import { jsPDF } from 'jspdf';
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp,
@@ -792,8 +793,193 @@ const SIMPLE_FIELDS: { key: keyof Vehicle; label: string; placeholder: string; t
   );
 }
 
+// ─── Invoice Printing ─────────────────────────────────────────────────────────
+function printAppointmentInvoice(appt: Appointment, customerName: string) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210;
+  let y = 0;
+
+  // Header bar
+  doc.setFillColor(17, 17, 17);
+  doc.rect(0, 0, W, 38, 'F');
+  doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 215, 0);
+  doc.text('ANURA TYRES PVT LTD', 14, 17);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(180, 180, 180);
+  doc.text('Professional Tyre & Vehicle Service', 14, 25);
+  doc.text('anuratyres.lk', 14, 31);
+  y = 50;
+
+  // Invoice title & number
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 30);
+  doc.text('SERVICE RECEIPT', 14, y);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 100, 100);
+  doc.text(`Booking #${appt.bookingId}`, W - 14, y, { align: 'right' });
+  y += 6;
+  doc.text(`Issued: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`, W - 14, y, { align: 'right' });
+  y += 10;
+
+  // Divider
+  doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.4);
+  doc.line(14, y, W - 14, y);
+  y += 8;
+
+  // Customer & service details
+  const col2 = W / 2 + 5;
+  doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(120, 120, 120);
+  doc.text('CUSTOMER', 14, y);
+  doc.text('SERVICE DATE', col2, y);
+  y += 5;
+  doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 30);
+  doc.text(customerName || 'Valued Customer', 14, y);
+  doc.text(new Date(appt.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }), col2, y);
+  y += 5;
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(80, 80, 80);
+  doc.text(appt.time, col2, y);
+  y += 5;
+  doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(120, 120, 120);
+  doc.text('BRANCH', 14, y);
+  y += 5;
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+  doc.text(appt.branch, 14, y);
+  y += 12;
+
+  // Services table header
+  doc.setFillColor(245, 245, 245);
+  doc.rect(14, y - 4, W - 28, 10, 'F');
+  doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(60, 60, 60);
+  doc.text('SERVICE / DESCRIPTION', 18, y + 2);
+  doc.text('STATUS', W - 18, y + 2, { align: 'right' });
+  y += 10;
+
+  // Service rows
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+  (appt.services || []).forEach(svc => {
+    doc.text(svc, 18, y);
+    doc.setTextColor(34, 197, 94);
+    doc.text('Completed', W - 18, y, { align: 'right' });
+    doc.setTextColor(30, 30, 30);
+    y += 8;
+  });
+  y += 4;
+
+  // Status badge
+  doc.setFillColor(240, 255, 244);
+  doc.setDrawColor(34, 197, 94);
+  doc.setLineWidth(0.5);
+  doc.rect(14, y, 50, 9, 'FD');
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(21, 128, 61);
+  doc.text('✓  Service Completed', 18, y + 6);
+  y += 18;
+
+  // Footer
+  doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.4);
+  doc.line(14, y, W - 14, y);
+  y += 7;
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(130, 130, 130);
+  doc.text('Thank you for choosing Anura Tyres Pvt Ltd. Drive safe!', 14, y);
+  y += 5;
+  doc.text('For enquiries: anuratyres.lk', 14, y);
+
+  doc.save(`receipt-${appt.bookingId}.pdf`);
+}
+
+function printOrderInvoice(order: Order, customerName: string) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210;
+  let y = 0;
+
+  // Header bar
+  doc.setFillColor(17, 17, 17);
+  doc.rect(0, 0, W, 38, 'F');
+  doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 215, 0);
+  doc.text('ANURA TYRES PVT LTD', 14, 17);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(180, 180, 180);
+  doc.text('Professional Tyre & Vehicle Service', 14, 25);
+  doc.text('anuratyres.lk', 14, 31);
+  y = 50;
+
+  // Invoice title & number
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 30);
+  doc.text('INVOICE', 14, y);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 100, 100);
+  doc.text(`Order #${order.id.toUpperCase()}`, W - 14, y, { align: 'right' });
+  y += 6;
+  doc.text(`Issued: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`, W - 14, y, { align: 'right' });
+  y += 10;
+
+  // Divider
+  doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.4);
+  doc.line(14, y, W - 14, y);
+  y += 8;
+
+  // Customer & order details
+  const col2 = W / 2 + 5;
+  doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(120, 120, 120);
+  doc.text('BILL TO', 14, y);
+  doc.text('ORDER DATE', col2, y);
+  y += 5;
+  doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 30);
+  doc.text(customerName || 'Valued Customer', 14, y);
+  doc.text(new Date(order.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }), col2, y);
+  y += 5;
+  doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(120, 120, 120);
+  doc.text('FULFILMENT', col2, y);
+  y += 5;
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+  doc.text(order.fulfilment || '—', col2, y);
+  y += 10;
+
+  // Items table header
+  doc.setFillColor(245, 245, 245);
+  doc.rect(14, y - 4, W - 28, 10, 'F');
+  doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(60, 60, 60);
+  doc.text('ITEM', 18, y + 2);
+  doc.text('SIZE', 100, y + 2);
+  doc.text('QTY', 130, y + 2);
+  doc.text('UNIT PRICE', 155, y + 2);
+  doc.text('TOTAL', W - 18, y + 2, { align: 'right' });
+  y += 10;
+
+  // Item rows
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+  (order.items || []).forEach(item => {
+    const lineTotal = item.price * item.qty;
+    doc.text(item.name, 18, y);
+    doc.text(item.size || '—', 100, y);
+    doc.text(String(item.qty), 133, y);
+    doc.text(`Rs. ${item.price.toLocaleString()}`, 157, y);
+    doc.text(`Rs. ${lineTotal.toLocaleString()}`, W - 18, y, { align: 'right' });
+    y += 8;
+  });
+  y += 4;
+
+  // Divider above total
+  doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.3);
+  doc.line(100, y, W - 14, y);
+  y += 7;
+
+  // Grand total
+  doc.setFillColor(17, 17, 17);
+  doc.rect(100, y - 5, W - 114, 12, 'F');
+  doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 215, 0);
+  doc.text('TOTAL', 104, y + 3);
+  doc.text(`Rs. ${order.total.toLocaleString()}`, W - 18, y + 3, { align: 'right' });
+  y += 20;
+
+  // Footer
+  doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.4);
+  doc.line(14, y, W - 14, y);
+  y += 7;
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(130, 130, 130);
+  doc.text('Thank you for shopping at Anura Tyres Pvt Ltd!', 14, y);
+  y += 5;
+  doc.text('For enquiries: anuratyres.lk', 14, y);
+
+  doc.save(`invoice-${order.id}.pdf`);
+}
+
 // ─── Appointments Tab ─────────────────────────────────────────────────────────
-function AppointmentsTab({ uid }: { uid: string }) {
+function AppointmentsTab({ uid, customerName }: { uid: string; customerName: string }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter]   = useState<'all' | 'upcoming' | 'completed'>('all');
@@ -877,7 +1063,10 @@ function AppointmentsTab({ uid }: { uid: string }) {
                     </div>
                   </div>
                   {appt.status === 'completed' && (
-                    <button className="flex items-center gap-1.5 text-xs text-brand-yellow hover:text-yellow-300 transition-colors">
+                    <button
+                      onClick={() => printAppointmentInvoice(appt, customerName)}
+                      className="flex items-center gap-1.5 text-xs text-brand-yellow hover:text-yellow-300 transition-colors"
+                    >
                       <Download className="w-3.5 h-3.5" /> Invoice
                     </button>
                   )}
@@ -892,7 +1081,7 @@ function AppointmentsTab({ uid }: { uid: string }) {
 }
 
 // ─── Orders Tab ───────────────────────────────────────────────────────────────
-function OrdersTab({ uid }: { uid: string }) {
+function OrdersTab({ uid, customerName }: { uid: string; customerName: string }) {
   const [orders, setOrders]   = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
@@ -952,7 +1141,10 @@ function OrdersTab({ uid }: { uid: string }) {
                   </div>
                   <div className="text-right">
                     <p className="font-black text-brand-yellow text-lg">Rs. {order.total.toLocaleString()}</p>
-                    <button className="text-xs text-neutral-500 hover:text-white flex items-center gap-1 ml-auto mt-1">
+                    <button
+                      onClick={() => printOrderInvoice(order, customerName)}
+                      className="text-xs text-neutral-500 hover:text-white flex items-center gap-1 ml-auto mt-1"
+                    >
                       <Download className="w-3 h-3" /> Invoice
                     </button>
                   </div>
@@ -1064,8 +1256,8 @@ export function DashboardPage() {
               transition={{ duration: 0.2 }}
             >
               {activeTab === 'vehicles'     && <VehiclesTab     uid={user.uid} />}
-              {activeTab === 'appointments' && <AppointmentsTab uid={user.uid} />}
-              {activeTab === 'orders'       && <OrdersTab       uid={user.uid} />}
+              {activeTab === 'appointments' && <AppointmentsTab uid={user.uid} customerName={user.displayName || user.email || 'Customer'} />}
+              {activeTab === 'orders'       && <OrdersTab       uid={user.uid} customerName={user.displayName || user.email || 'Customer'} />}
             </motion.div>
           </AnimatePresence>
         </div>

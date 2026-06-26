@@ -252,6 +252,8 @@ const COUNTRY_CODES = [
   { code: '+263', flag: '🇿🇼', name: 'Zimbabwe', digits: 9 },
 ];
 
+const API_URL = (import.meta as { env: { VITE_API_URL?: string } }).env.VITE_API_URL || 'https://anuratyres-backend-emm1774.vercel.app/api';
+
 const passwordStrength = (pwd: string) => {
   let score = 0;
   if (pwd.length >= 8) score++;
@@ -444,6 +446,13 @@ export function RegisterPage() {
       const cred = await createUserWithEmailAndPassword(auth, form.email, form.password);
       await updateProfile(cred.user, { displayName: form.name });
       saveUserProfile(cred.user.uid);
+      // Save phone to backend CRM so it appears in the staff portal customer list
+      const fullPhone = `${form.countryCode}${form.phone.replace(/\D/g, '')}`;
+      fetch(`${API_URL}/customers?uid=${encodeURIComponent(cred.user.uid)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: fullPhone }),
+      }).catch(() => {});
       try {
         await saveVehicleToFirestore(cred.user.uid);
       } catch (err) {

@@ -4,6 +4,8 @@ import { Tag, CheckCircle, AlertCircle, X, Car, Loader2 } from 'lucide-react';
 import { db, auth } from "../../firebase";
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
+const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface CustomerData {
@@ -187,7 +189,7 @@ export function CustomerForm({ data, onChange }: CustomerFormProps) {
   // Separate flag so we don't pollute vehicleNo with '__other__' sentinel
   const [manualEntry, setManualEntry] = useState(false);
 
-  // ── Autofill from Firebase Auth + localStorage ─────────────────────────────
+  // ── Autofill from Firebase Auth + localStorage + backend ──────────────────
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
@@ -195,23 +197,45 @@ export function CustomerForm({ data, onChange }: CustomerFormProps) {
     setProfileLoading(true);
     const authName  = user.displayName ?? '';
     const authEmail = user.email ?? '';
-    let   phone     = '';
+
+    // Priority: Firebase Auth phoneNumber → localStorage cached profile → backend
+    let phone = user.phoneNumber ?? '';
+    let name  = authName;
 
     try {
       const raw = localStorage.getItem(`at_profile_${user.uid}`);
       if (raw) {
         const profile = JSON.parse(raw) as { phone?: string; name?: string };
-        phone = profile.phone ?? '';
-        if (profile.name) {
-          onChange({ ...data, name: profile.name || authName, email: authEmail, phone });
-          setProfileLoading(false);
-          return;
-        }
+        if (!phone && profile.phone) phone = profile.phone;
+        if (profile.name) name = profile.name;
       }
     } catch { /* ignore malformed JSON */ }
 
-    onChange({ ...data, name: authName, email: authEmail, phone });
-    setProfileLoading(false);
+    if (phone) {
+      // Already have phone — apply immediately, no network call needed
+      onChange({ ...data, name: name || authName, email: authEmail, phone });
+      setProfileLoading(false);
+      return;
+    }
+
+    // No phone yet — check CRM supplement for a staff-saved phone
+    fetch(`${API_URL}/crm?resource=customers&uid=${encodeURIComponent(user.uid)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((res: any) => {
+        const backendPhone = res?.phone || '';
+        if (backendPhone) {
+          // Cache for next visit
+          try {
+            const cached = JSON.parse(localStorage.getItem(`at_profile_${user.uid}`) || '{}');
+            localStorage.setItem(`at_profile_${user.uid}`, JSON.stringify({ ...cached, phone: backendPhone }));
+          } catch { /* ignore */ }
+        }
+        onChange({ ...data, name: name || authName, email: authEmail, phone: backendPhone });
+      })
+      .catch(() => {
+        onChange({ ...data, name: name || authName, email: authEmail, phone: '' });
+      })
+      .finally(() => setProfileLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
