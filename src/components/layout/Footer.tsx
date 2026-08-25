@@ -126,18 +126,24 @@ export function Footer() {
             reserved.
           </p>
           <div className="flex gap-6">
-            <a
-              href="#"
+            <Link
+              to="/privacy-policy"
               className="text-brand-gray hover:text-brand-white text-xs">
 
               Privacy Policy
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              to="/terms-of-service"
               className="text-brand-gray hover:text-brand-white text-xs">
 
               Terms of Service
-            </a>
+            </Link>
+            <Link
+              to="/cookie-policy"
+              className="text-brand-gray hover:text-brand-white text-xs">
+
+              Cookie Policy
+            </Link>
           </div>
         </div>
       </div>

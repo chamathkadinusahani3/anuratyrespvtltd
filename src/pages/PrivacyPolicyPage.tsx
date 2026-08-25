@@ -56,8 +56,8 @@ We collect data through:
 • Website inquiry forms
 • Online bookings
 • Product purchases
-• Cookies and analytics tools
-• Third-party integrations
+• Account activity (page views, searches, bookings) when you are signed in
+• Cookies and browser information
 • Customer support interactions
     `,
   },
@@ -80,14 +80,11 @@ Your information may be used to:
     title: 'Cookies & Tracking',
     icon: Cookie,
     content: `
-Our website uses:
+Our website uses essential cookies to keep you signed in and to remember your booking progress.
 
-• Cookies
-• Google Analytics
-• Facebook Pixel
-• Google Ads Conversion Tracking
+If you are signed in, we also log your on-site activity — such as pages viewed, searches made, and bookings started or completed — to your account so we can improve our services and provide support. This activity log is only linked to your account and is not shared with advertising or analytics networks.
 
-These technologies help improve user experience, monitor traffic, and measure advertising performance.
+We do not currently use third-party advertising or analytics trackers such as Google Analytics, Facebook Pixel, or Google Ads. See our Cookie Policy for full details.
     `,
   },
   {
@@ -100,8 +97,8 @@ Your information may be shared with trusted third parties including:
 
 • Payment processors
 • Delivery providers
-• Website hosting services
-• Marketing providers
+• Website hosting and cloud infrastructure providers (Firebase)
+• Email service providers (EmailJS), for handling contact and inquiry forms
 • Regulatory authorities when legally required
     `,
   },
@@ -166,7 +163,7 @@ export function PrivacyPolicyPage() {
           </h1>
 
           <p className="max-w-4xl mx-auto text-lg md:text-xl text-gray-400 leading-relaxed">
-            Effective Date: May 27, 2026 | Last Updated: May 27, 2026
+            Effective Date: May 27, 2026 | Last Updated: August 25, 2026
           </p>
 
         </div>
