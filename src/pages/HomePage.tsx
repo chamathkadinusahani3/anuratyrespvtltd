@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Layout } from '../components/layout/Layout';
 import { HeroSection } from '../components/home/HeroSection';
 import { BranchPreview } from '../components/home/BranchPreview';
@@ -360,7 +361,30 @@ export function HomePage() {
   useActivityTracker({ type: 'page_view', page: '/' });
 
   return (
-    <Layout>
+    <Layout
+      title="Home"
+      description="Anura Tyres (Pvt) Ltd offers premium tyres, wheel alignment, balancing, and expert vehicle care across Sri Lanka. Trusted since 1983. Book your service online today."
+    >
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'AutoRepair',
+            name: 'Anura Tyres (Pvt) Ltd',
+            image: 'https://www.anuratyres.com/logo.png',
+            url: 'https://www.anuratyres.com/',
+            telephone: '+94775785785',
+            priceRange: 'LKR',
+            address: {
+              '@type': 'PostalAddress',
+              streetAddress: '278/2 High Level Rd',
+              addressLocality: 'Pannipitiya',
+              addressCountry: 'LK',
+            },
+            openingHours: 'Mo-Sa 08:00-18:00',
+          })}
+        </script>
+      </Helmet>
   
       <HeroSection />
    

@@ -55,7 +55,10 @@ export function ServicesPage() {
   useActivityTracker({ type: 'page_view', page: '/services' });
 
   return (
-    <Layout>
+    <Layout
+      title="Services"
+      description="Explore Anura Tyres' full range of services — tyre sales, wheel alignment, balancing, alloy wheels, and commercial fleet support across Sri Lanka."
+    >
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-black py-28 px-4 sm:px-6 lg:px-8 border-b border-white/5">

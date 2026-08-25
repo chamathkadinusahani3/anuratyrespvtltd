@@ -134,7 +134,10 @@ Any disputes arising from the use of our services shall fall under the jurisdict
 
 export function TermsOfServicePage() {
   return (
-    <Layout>
+    <Layout
+      title="Terms of Service"
+      description="Read the terms of service governing the use of Anura Tyres (Pvt) Ltd's products, services, and website."
+    >
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-black py-28 px-4 sm:px-6 lg:px-8 border-b border-white/5">

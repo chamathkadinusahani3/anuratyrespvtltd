@@ -137,7 +137,10 @@ Under the Personal Data Protection Act No. 9 of 2022 of Sri Lanka, you may reque
 
 export function PrivacyPolicyPage() {
   return (
-    <Layout>
+    <Layout
+      title="Privacy Policy"
+      description="Read Anura Tyres (Pvt) Ltd's privacy policy to understand how we collect, use, and protect your personal information."
+    >
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-black py-28 px-4 sm:px-6 lg:px-8 border-b border-white/5">

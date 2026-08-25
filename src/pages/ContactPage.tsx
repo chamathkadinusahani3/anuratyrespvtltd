@@ -55,7 +55,10 @@ export function ContactPage() {
   };
 
   return (
-    <Layout>
+    <Layout
+      title="Contact Us"
+      description="Get in touch with Anura Tyres (Pvt) Ltd. Find our branch locations, phone numbers, and send us an inquiry."
+    >
       {/* Hero */}
       <div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: `url(${contact})` }} />

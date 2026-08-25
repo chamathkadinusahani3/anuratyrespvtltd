@@ -9,7 +9,10 @@ export function AboutPage() {
   useActivityTracker({ type: 'page_view', page: '/about' });
 
   return (
-    <Layout>
+    <Layout
+      title="About Us"
+      description="Learn about Anura Tyres (Pvt) Ltd — a trusted Sri Lankan tyre and vehicle care company serving customers with quality service since 1983."
+    >
       {/* HERO */}
       <section className="relative bg-black py-28 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10" />

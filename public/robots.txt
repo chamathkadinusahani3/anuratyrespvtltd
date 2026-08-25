@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /booking
+Disallow: /cart
+Disallow: /approve/
+
+Sitemap: https://www.anuratyres.com/sitemap.xml

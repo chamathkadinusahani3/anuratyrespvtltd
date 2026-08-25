@@ -92,7 +92,7 @@ export function BookingPage() {
   };
 
   return (
-    <Layout>
+    <Layout title="Book a Service" noindex>
       <div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: `url(${book})` }} />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />

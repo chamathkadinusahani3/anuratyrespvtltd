@@ -17,7 +17,10 @@ export function BranchesPage() {
   };
 
   return (
-    <Layout>
+    <Layout
+      title="Our Branches"
+      description="Find your nearest Anura Tyres branch in Sri Lanka. View locations, contact details, and available services at each branch."
+    >
       {/* Hero */}
       <div className="relative bg-black py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: `url(${branches})` }} />

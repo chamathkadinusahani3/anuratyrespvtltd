@@ -1185,7 +1185,7 @@ export function DashboardPage() {
 
   if (!user) {
     return (
-      <Layout>
+      <Layout title="My Dashboard" noindex>
         <div className="min-h-screen bg-black flex items-center justify-center px-4">
           <div className="text-center max-w-md">
             <div className="w-20 h-20 bg-brand-yellow/10 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -1209,7 +1209,7 @@ export function DashboardPage() {
   ] as const;
 
   return (
-    <Layout>
+    <Layout title="My Dashboard" noindex>
       <div className="bg-black border-b border-white/5 pt-10 pb-0 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-4 mb-8">

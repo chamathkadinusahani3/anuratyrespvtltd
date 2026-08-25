@@ -148,7 +148,10 @@ export function ProductsPage() {
   const hasActiveFilters = Object.entries(filters).some(([k, v]) => k !== 'sort' && v !== '');
 
   return (
-    <Layout>
+    <Layout
+      title="Products"
+      description="Browse tyres and automotive products available at Anura Tyres (Pvt) Ltd. Quality brands at competitive prices across Sri Lanka."
+    >
       {/* Hero */}
       <div ref={topRef} className="relative bg-black py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: `url(${products})` }} />

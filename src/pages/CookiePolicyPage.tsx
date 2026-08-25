@@ -169,7 +169,10 @@ function CookieSettingsPanel() {
 
 export function CookiePolicyPage() {
   return (
-    <Layout>
+    <Layout
+      title="Cookie Policy"
+      description="Learn how Anura Tyres (Pvt) Ltd uses cookies and manage your cookie preferences."
+    >
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-black py-28 px-4 sm:px-6 lg:px-8 border-b border-white/5">
