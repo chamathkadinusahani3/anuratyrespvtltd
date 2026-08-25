@@ -59,22 +59,6 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link
-                  to="/booking"
-                  className="text-brand-gray hover:text-brand-yellow text-sm">
-
-                  Book a Service
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/products"
-                  className="text-brand-gray hover:text-brand-yellow text-sm">
-
-                  Check Stock
-                </Link>
-              </li>
-              <li>
-                <Link
                   to="/services"
                   className="text-brand-gray hover:text-brand-yellow text-sm">
 

@@ -3,7 +3,7 @@ import { Layout } from '../components/layout/Layout';
 import { HeroSection } from '../components/home/HeroSection';
 import { BranchPreview } from '../components/home/BranchPreview';
 import { ServicesPreview } from '../components/home/ServicesPreview';
-import { TyreSearch } from '../components/home/TyreSearch';
+
 import { Button } from '../components/ui/Button';
 import { Link, useNavigate } from 'react-router-dom';
 import { useActivityTracker } from '../hooks/useActivityTracker';
@@ -29,10 +29,8 @@ const FEATURED_PRODUCTS = [
 const REVIEWS = [
   { name: 'Kavindu Perera', rating: 5, date: '2 weeks ago', text: 'Excellent service! The team at Pannipitiya branch was very professional. Got my wheel alignment done quickly and the difference is noticeable. Highly recommend Anura Tyres.', avatar: 'K' },
   { name: 'Dilshan Fernando', rating: 5, date: '1 month ago', text: 'Best tyre shop in Colombo. They have a great range of tyres for all budgets. The staff explained everything clearly and helped me pick the right tyres for my car. Will definitely come back.', avatar: 'D' },
-  { name: 'Nirmala Silva', rating: 5, date: '3 weeks ago', text: 'Very impressed with the service. Booked online, arrived on time, and the job was done perfectly. The waiting area is clean and comfortable. Five stars without a doubt!', avatar: 'N' },
   { name: 'Rajith Bandara', rating: 4, date: '1 month ago', text: 'Good quality tyres at competitive prices. The balancing service was done well. Slight wait time but the quality of work makes it worth it. Friendly staff overall.', avatar: 'R' },
   { name: 'Priya Jayawardena', rating: 5, date: '2 months ago', text: 'Trusted Anura Tyres for over 5 years now. Always consistent quality. They never oversell you — they tell you exactly what your vehicle needs. That honesty keeps me coming back.', avatar: 'P' },
-  { name: 'Chamara Wijesinghe', rating: 5, date: '3 months ago', text: 'Fantastic experience from start to finish. The online booking system is very convenient. Staff were courteous and the tyre replacement was quick. Great value for money.', avatar: 'C' },
 ];
 
 function StarRating({ rating }: { rating: number }) {
@@ -363,17 +361,17 @@ export function HomePage() {
 
   return (
     <Layout>
-      <HomeSearchBar />
+  
       <HeroSection />
-      <TyreSearch />
+   
       <BranchPreview />
       <WheelAlignmentPage/>
       <ExcellenceSection/>
       <ServicesPreview />
-      <LiveShopSection />
-      <FeaturedProducts />
+     
+     
       <ReviewsSection />
-      <NewsletterSection />
+    
 
       
 
@@ -400,17 +398,6 @@ export function HomePage() {
         </p>
 
         <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-          <Link to="/booking" className="w-full sm:w-auto">
-            <Button
-              size="lg"
-              className="group relative bg-brand-yellow text-black hover:bg-white transition-all duration-300 font-bold px-10 h-14 w-full sm:w-auto rounded-xl overflow-hidden shadow-[0_10px_20px_-10px_rgba(255,215,0,0.3)]"
-            >
-              <span className="relative z-10">Book Appointment Now</span>
-
-              <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-            </Button>
-          </Link>
-
           <Link to="/contact" className="w-full sm:w-auto">
             <Button
               variant="outline"

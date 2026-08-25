@@ -81,8 +81,8 @@ export function ContactPage() {
             <div className="lg:col-span-1 space-y-8">
               <Card className="p-8">
                 <h3 className="text-xl font-bold text-white mb-6">Contact Information</h3>
-                <Info icon={<Phone />} title="Call Us">011-2345678</Info>
-                <Info icon={<MessageCircle />} title="WhatsApp">077-1234567</Info>
+                <Info icon={<Phone />} title="Call Us">011-2841123</Info>
+                <Info icon={<MessageCircle />} title="WhatsApp">077 5 785 785</Info>
                 <Info icon={<Mail />} title="Email Us">info@anuratyres.com</Info>
                 <Info icon={<MapPin />} title="Head Office">
                   123 High Level Road,<br />Pannipitiya, Sri Lanka

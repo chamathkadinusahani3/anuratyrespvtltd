@@ -447,14 +447,7 @@ export function LoginPage() {
               <Link to="/register" className="font-bold text-brand-yellow hover:text-yellow-300 transition-colors">Create one free →</Link>
             </p>
 
-            <div className="mt-6 pt-6 border-t border-white/5 flex flex-col sm:flex-row gap-2 text-xs text-center">
-              <Link to="/corporate/register" className="flex-1 py-2.5 rounded-lg border border-white/10 text-neutral-500 hover:border-brand-yellow/30 hover:text-brand-yellow transition-all">
-                🏢 Corporate Registration
-              </Link>
-              <Link to="/employee/register" className="flex-1 py-2.5 rounded-lg border border-white/10 text-neutral-500 hover:border-brand-yellow/30 hover:text-brand-yellow transition-all">
-                👤 Employee Discount
-              </Link>
-            </div>
+            
           </motion.div>
         </div>
       </div>

@@ -1,8 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Button } from '../ui/Button';
-import { ArrowRight, ShieldCheck, Clock, PenTool, Search } from 'lucide-react';
+import { ShieldCheck, Clock, PenTool } from 'lucide-react';
 
 export function HeroSection() {
   return (
@@ -43,32 +41,6 @@ export function HeroSection() {
             services across Sri Lanka. Book online, check stock, or request a
             quotation in minutes.
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Link to="/booking">
-              <Button size="lg" className="w-full sm:w-auto group">
-                Book a Service
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link to="/products">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                Request Quotation
-              </Button>
-            </Link>
-            {/* Scroll to search hint */}
-            <a
-              href="#tyre-search"
-              onClick={e => {
-                e.preventDefault();
-                document.getElementById('tyre-search')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="hidden sm:inline-flex items-center gap-2 px-6 py-3 rounded-md border border-white/10 text-brand-gray hover:text-white hover:border-white/30 transition-all text-base font-bold h-14"
-            >
-              <Search className="w-5 h-5" />
-              Find Tyres
-            </a>
-          </div>
           
           {/* Trust Indicators */}
           <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 border-t border-white/10 pt-8">

@@ -7,7 +7,6 @@ import {
   Car,
   Wrench,
   Truck,
-  ChevronRight,
   ShieldCheck,
   Clock3,
   BadgeCheck,
@@ -183,16 +182,6 @@ export function ServicesPage() {
                   {/* Actions */}
                   <div className="flex flex-col sm:flex-row gap-4">
 
-                    <Link to="/booking">
-                      <Button
-                        size="lg"
-                        className="group bg-brand-yellow text-black hover:bg-white font-bold rounded-2xl px-8 h-14 transition-all duration-300"
-                      >
-                        Book Service
-                        <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                      </Button>
-                    </Link>
-
                     <Link to="/contact">
                       <Button
                         variant="outline"
@@ -239,23 +228,6 @@ export function ServicesPage() {
                         <p className="text-gray-400 leading-relaxed flex-1 text-sm">
                           {service.description}
                         </p>
-
-                        {/* Footer */}
-                        <div className="mt-8 flex items-center justify-between">
-
-                          <span
-                            className="text-xs font-bold uppercase tracking-wider"
-                            style={{ color: section.accent }}
-                          >
-                            Premium Service
-                          </span>
-
-                          <ChevronRight
-                            className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
-                            style={{ color: section.accent }}
-                          />
-
-                        </div>
                       </div>
                     </Card>
                   ))}

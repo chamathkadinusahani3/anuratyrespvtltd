@@ -188,11 +188,6 @@ export function CorporateRegistration() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link to="/" className="flex-1 sm:flex-initial">
-                <button className="w-full px-6 py-3 bg-[#FFD700] text-black font-bold rounded-lg hover:bg-[#FFD700]/90 transition-colors">
-                  Book a Service
-                </button>
-              </Link>
               <button onClick={generateDiscountCardPDF} disabled={generatingPDF}
                 className="flex-1 sm:flex-initial px-6 py-3 border border-neutral-700 text-white font-medium rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {generatingPDF ? <><Loader2 className="w-4 h-4 animate-spin" />Generating...</> : <><Download className="w-4 h-4" />Download Discount Card</>}

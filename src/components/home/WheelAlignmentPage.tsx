@@ -8,7 +8,6 @@ import {
   Settings,
   Shield,
   TrendingUp,
-  ArrowRight,
   Sparkles,
   ChevronRight,
 } from 'lucide-react';
@@ -86,13 +85,6 @@ export function WheelAlignmentPage() {
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
-              <Link to="/booking">
-                <Button className="group bg-brand-yellow hover:bg-yellow-300 text-black font-bold px-8 h-14 rounded-2xl text-sm shadow-[0_15px_50px_rgba(255,204,0,0.25)]">
-                  Book Appointment
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                </Button>
-              </Link>
-
               <Link to="/contact">
                 <Button
                   variant="outline"
@@ -261,15 +253,6 @@ export function WheelAlignmentPage() {
             world-class Hunter Engineering precision.
           </p>
 
-          <div className="mt-10 flex justify-center">
-            <Link to="/booking">
-              <Button className="group bg-brand-yellow hover:bg-yellow-300 text-black font-black px-10 h-14 rounded-2xl shadow-[0_15px_50px_rgba(255,204,0,0.25)]">
-                Book Appointment
-
-                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
     </div>

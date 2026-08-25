@@ -161,12 +161,6 @@ export function AboutPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/booking">
-              <button className="bg-brand-yellow text-black font-bold px-8 py-4 rounded-xl hover:bg-white transition">
-                Book Appointment
-              </button>
-            </Link>
-
             <Link to="/contact">
               <button className="border border-white/20 text-white px-8 py-4 rounded-xl hover:bg-white hover:text-black transition">
                 Contact Us
