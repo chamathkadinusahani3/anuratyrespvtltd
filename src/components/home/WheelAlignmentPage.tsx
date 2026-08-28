@@ -208,31 +208,43 @@ export function WheelAlignmentPage() {
 
       {/* HUNTER SECTION */}
       <section className="relative py-28 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="relative overflow-hidden rounded-[36px] border border-white/10 bg-white/[0.03] backdrop-blur-2xl p-10 md:p-16 text-center">
+        <div className="max-w-6xl mx-auto">
+          <div className="relative overflow-hidden rounded-[36px] border border-white/10 bg-white/[0.03] backdrop-blur-2xl p-6 md:p-10">
             <div className="absolute inset-0 bg-gradient-to-br from-brand-yellow/[0.05] via-transparent to-brand-red/[0.04]" />
 
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-black/20 mb-8">
-                <Sparkles className="w-4 h-4 text-brand-yellow" />
-                <span className="text-[11px] uppercase tracking-[0.25em] text-gray-300 font-bold">
-                  Hunter Engineering System
-                </span>
+            <div className="relative z-10 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+
+              <div className="rounded-[28px] overflow-hidden border border-white/10">
+                <img
+                  src="/wheelal.png"
+                  alt="Hunter Engineering wheel alignment system in use at Anura Tyres"
+                  className="w-full h-full object-cover"
+                />
               </div>
 
-              <h2 className="text-4xl md:text-5xl font-black leading-tight">
-                ADVANCED 3D
-                <span className="block bg-gradient-to-r from-brand-yellow to-brand-red bg-clip-text text-transparent">
-                  ALIGNMENT TECHNOLOGY
-                </span>
-              </h2>
+              <div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-black/20 mb-8">
+                  <Sparkles className="w-4 h-4 text-brand-yellow" />
+                  <span className="text-[11px] uppercase tracking-[0.25em] text-gray-300 font-bold">
+                    Hunter Engineering System
+                  </span>
+                </div>
 
-              <p className="mt-8 text-gray-400 leading-relaxed text-lg max-w-3xl mx-auto">
-                Our Hunter Engineering wheel alignment system delivers
-                industry-leading precision using advanced computerized 3D
-                measurement technology — trusted globally for superior
-                performance, accuracy, and reliability.
-              </p>
+                <h2 className="text-4xl md:text-5xl font-black leading-tight">
+                  ADVANCED 3D
+                  <span className="block bg-gradient-to-r from-brand-yellow to-brand-red bg-clip-text text-transparent">
+                    ALIGNMENT TECHNOLOGY
+                  </span>
+                </h2>
+
+                <p className="mt-8 text-gray-400 leading-relaxed text-lg">
+                  Our Hunter Engineering wheel alignment system delivers
+                  industry-leading precision using advanced computerized 3D
+                  measurement technology — trusted globally for superior
+                  performance, accuracy, and reliability.
+                </p>
+              </div>
+
             </div>
           </div>
         </div>
