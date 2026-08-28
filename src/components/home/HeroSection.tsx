@@ -38,8 +38,7 @@ export function HeroSection() {
           
           <p className="text-xl text-brand-gray mb-10 max-w-2xl leading-relaxed">
             Premium tyre solutions, expert mechanical repairs, and heavy vehicle
-            services across Sri Lanka. Book online, check stock, or request a
-            quotation in minutes.
+            services across Sri Lanka.
           </p>
           
           {/* Trust Indicators */}
